@@ -1,0 +1,47 @@
+<div class="min-h-screen bg-slate-50 px-3 py-3 font-sans sm:px-6 sm:py-4">
+  <div class="mx-auto max-w-[1920px]">
+    <button
+      type="button"
+      (click)="goBack()"
+      class="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-blue-800"
+    >
+      <span class="text-lg leading-none">←</span>
+      กลับไปหน้าบุคลากร
+    </button>
+
+    <header class="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="h-1.5 bg-amber-500"></div>
+      <div class="px-5 py-4 sm:px-6">
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">ข้อมูลพัสดุ</p>
+        <h1 class="mt-1 text-xl font-bold text-blue-900 sm:text-2xl">พัสดุของบุคลากร</h1>
+        <p class="mt-1 text-sm text-slate-500">
+          {{ staff()?.full_name || 'บุคลากร #' + staffId }}
+          @if (staff()?.department_name) {
+            <span> • {{ staff()?.department_name }}</span>
+          }
+        </p>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+        กำลังโหลดข้อมูลพัสดุ...
+      </div>
+    } @else if (loadError()) {
+      <div class="rounded-xl border border-red-200 bg-white p-8 text-center text-sm text-red-700">
+        โหลดข้อมูลพัสดุไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
+      </div>
+    } @else {
+      <app-data-table
+        title="รายการพัสดุ"
+        subtitle="พัสดุที่เบิกในชื่อบุคลากรคนนี้"
+        [data]="assets()"
+        [columns]="columns"
+        [idKey]="'asset_id'"
+        [totalItems]="assets().length"
+        [pageSize]="1000"
+        [enableSearch]="false"
+      ></app-data-table>
+    }
+  </div>
+</div>

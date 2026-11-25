@@ -1,0 +1,67 @@
+<app-data-table
+  title="ประวัติการใช้ครุภัณฑ์"
+  subtitle="บันทึกประวัติการใช้งาน ซ่อม และการเปลี่ยนแปลงของครุภัณฑ์รายการนี้"
+  [data]="AssetSubItemHistorys()"
+  [columns]="columns"
+  [idKey]="'sub_item_history_id'"
+  [isAdmin]="true"
+  [sortOptions]="sortOptions"
+  [totalItems]="AssetSubItemHistory?.count ?? 0"
+  [pageSize]="Params.pageSize"
+  [currentPage]="Params.pageNumber"
+  (search)="onSearch($event)"
+  (sortChange)="onSort($event)"
+  (pageChange)="onPageChange($event)"
+  (add)="goToCreate()"
+  (edit)="goToEdit($event)"
+  (delete)="deleteAssetSubItemHistory($event)"
+  (back)="cancel()"
+  [showBack]="true"
+  [showDetail]="true"
+  (action)="openDetails($event.item)"
+  [butttonColor]="butttonColor"
+  [headerColor]="headerColor"
+  [headerBorderColor]="headerBorderColor"
+>
+</app-data-table>
+
+@if (selectedHistory(); as item) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" (click)="closeDetails()">
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="asset-history-detail-title"
+      class="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-4 border-b-2 border-orange-800 bg-orange-700 px-6 py-4">
+        <div>
+          <p class="text-sm font-semibold text-white">ประวัติการใช้ครุภัณฑ์</p>
+          <h2 id="asset-history-detail-title" class="mt-1 text-xl font-bold text-white">รายละเอียดประวัติ</h2>
+        </div>
+        <button type="button" (click)="closeDetails()" aria-label="ปิดรายละเอียด" class="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-bold text-white hover:bg-white/15">✕ ปิด</button>
+      </div>
+      <dl class="grid gap-4 bg-slate-50 p-6 sm:grid-cols-2">
+        <div class="rounded-lg border border-slate-300 border-l-4 border-l-orange-600 bg-white px-4 py-3">
+          <dt class="text-sm font-bold text-slate-700">วันที่ทำรายการ</dt>
+          <dd class="mt-1 text-lg font-bold text-slate-900">{{ item.history_date ? (item.history_date | thaiDate: false : 'long') : '-' }}</dd>
+        </div>
+        <div class="rounded-lg border border-slate-300 border-l-4 border-l-orange-600 bg-white px-4 py-3">
+          <dt class="text-sm font-bold text-slate-700">ผู้ใช้งานครุภัณฑ์</dt>
+          <dd class="mt-1 text-lg font-bold text-slate-900">{{ item.fullName || '-' }}</dd>
+        </div>
+        <div class="rounded-lg border border-slate-300 border-l-4 border-l-orange-600 bg-white px-4 py-3 sm:col-span-2">
+          <dt class="text-sm font-bold text-slate-700">ประเภทการใช้งานครุภัณฑ์</dt>
+          <dd class="mt-1 text-lg font-bold text-slate-900">{{ item.usage_type_name || '-' }}</dd>
+        </div>
+        <div class="rounded-lg border border-slate-300 border-l-4 border-l-orange-600 bg-white px-4 py-3 sm:col-span-2">
+          <dt class="text-sm font-bold text-slate-700">รายละเอียด</dt>
+          <dd class="mt-1 whitespace-pre-wrap break-words text-base text-slate-900">{{ item.detail || '-' }}</dd>
+        </div>
+      </dl>
+      <div class="flex justify-end border-t border-slate-300 bg-white px-6 py-4">
+        <button type="button" (click)="closeDetails()" class="rounded-lg border border-slate-400 bg-white px-6 py-2.5 text-base font-bold text-slate-800 hover:bg-slate-100">ปิด</button>
+      </div>
+    </section>
+  </div>
+}

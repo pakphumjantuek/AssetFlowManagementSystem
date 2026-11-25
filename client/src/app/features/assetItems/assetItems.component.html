@@ -1,0 +1,72 @@
+@if (assetsMissingCode().length > 0) {
+  <div class="mx-3 mt-4 overflow-hidden rounded-xl border border-orange-400 border-l-[6px] border-l-orange-600 bg-orange-50 text-orange-950 shadow-sm sm:mx-6" role="alert">
+    <div class="flex items-start gap-3 px-5 py-4">
+      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-600 text-lg font-bold text-white">!</span>
+      <div class="min-w-0 flex-1">
+        <p class="text-lg font-bold">กรุณาตั้งรหัสครุภัณฑ์หลัก</p>
+        <p class="mt-1 text-base text-orange-950">
+          พบ <span class="font-extrabold">{{ assetsMissingCode().length }}</span> รายการในหน้านี้ที่ยังไม่ได้ตั้งรหัสรายการแม่ กดชื่อรายการด้านล่างเพื่อตั้งรหัส
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          @for (asset of assetsMissingCode(); track asset.asset_id) {
+            <button type="button" (click)="goToEdit(asset)" class="rounded-lg border border-orange-600 bg-white px-3.5 py-2 text-base font-bold text-orange-950 shadow-sm transition hover:bg-orange-100">
+              ตั้งรหัส: {{ asset.asset_name }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<app-data-table
+  title="ทะเบียนครุภัณฑ์หลัก"
+  subtitle="จัดการรายการครุภัณฑ์หลักของเอกสารจัดซื้อนี้"
+  [data]="assetItems()"
+  [columns]="columns"
+  [idKey]="'asset_id'"
+  [isAdmin]="true"
+  [sortOptions]="sortOptions"
+  [totalItems]="assetItem?.count ?? 0"
+  [pageSize]="Params.pageSize"
+  [currentPage]="Params.pageNumber"
+  (search)="onSearch($event)"
+  (sortChange)="onSort($event)"
+  (pageChange)="onPageChange($event)"
+  (add)="goToCreate()"
+  (edit)="goToEdit($event)"
+  (delete)="deleteAssetItems($event)"
+  Namepath="ดูรายการย่อย"
+  (back)="cancel()"
+  (action)="onTableAction($event)"
+  [showDetail]="true"
+  [showPathTo]="true"
+  [showBack]="true"
+  [showDispose]="true"
+  [headerColor]="headerColor"
+  [headerBorderColor]="headerBorderColor"
+  [badgeColors]="badgeColors"
+  [butttonColor]="butttonColor"
+>
+  <button
+    headerActions
+    type="button"
+    (click)="goToWithdrawalExport()"
+    class="inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-red-700 bg-white px-4 py-2.5 text-sm font-bold text-red-800 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-200 sm:w-auto sm:rounded-xl sm:px-6 sm:py-3 sm:text-base"
+  >
+    ส่งออกใบเบิก PDF
+  </button>
+  <button
+    headerActions
+    type="button"
+    (click)="goToWithdrawal()"
+    class="inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-orange-700 bg-white px-4 py-2.5 text-sm font-bold text-orange-800 shadow-sm transition-colors hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-200 sm:w-auto sm:rounded-xl sm:px-6 sm:py-3 sm:text-base"
+  >
+    เบิกครุภัณฑ์
+  </button>
+</app-data-table>
+@if (disposalTarget(); as target) {
+  <app-asset-disposal-dialog [assetId]="target.asset.asset_id" [name]="target.asset.asset_name"
+    [readonly]="target.readonly" (closed)="disposalTarget.set(null)"
+    (saved)="disposalTarget.set(null); LoadgetAssetItems(procurement_record_id()!)" />
+}

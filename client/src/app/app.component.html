@@ -1,0 +1,7 @@
+@if (apiAvailability.unavailable()) {
+  <div class="fixed inset-x-0 top-0 z-[100] border-b-2 border-amber-400 bg-amber-100 px-4 py-3 text-center text-amber-950 shadow-md" role="alert">
+    <p class="text-base font-bold">ขณะนี้ไม่สามารถเชื่อมต่อกับระบบได้ชั่วคราว</p>
+    <p class="text-sm">กรุณารอสักครู่ ระบบกำลังเชื่อมต่อใหม่ให้อัตโนมัติ หากยังไม่ได้ผล โปรดแจ้งผู้ดูแลระบบ</p>
+  </div>
+}
+<router-outlet></router-outlet>

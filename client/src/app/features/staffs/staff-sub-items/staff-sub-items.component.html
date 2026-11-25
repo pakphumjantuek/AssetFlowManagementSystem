@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-slate-50 px-4 py-5 sm:px-6 lg:px-8">
+  <main class="mx-auto w-full max-w-[1920px] space-y-5">
+    <button
+      type="button"
+      (click)="goBack()"
+      class="inline-flex items-center gap-2 text-sm font-semibold text-blue-800 hover:text-blue-950"
+    >
+      <span aria-hidden="true">←</span>
+      กลับไปหน้าครุภัณฑ์ของบุคลากร
+    </button>
+
+    <section class="rounded-xl border border-violet-200 bg-violet-50 p-5 shadow-sm sm:p-6">
+      <p class="text-sm font-semibold text-violet-800">รายละเอียดครุภัณฑ์หลัก</p>
+      <h1 class="mt-1 text-xl font-bold text-violet-950 sm:text-2xl">
+        {{ assetName() || 'ครุภัณฑ์ #' + assetId }}
+      </h1>
+      <div class="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-violet-900">
+        <span>รหัสครุภัณฑ์: {{ assetCode() || '-' }}</span>
+        <span>บุคลากร: {{ staff?.full_name || 'บุคลากร #' + staffId }}</span>
+      </div>
+    </section>
+
+    @if (loading()) {
+      <section class="rounded-xl border border-blue-200 bg-white p-10 text-center text-sm font-medium text-slate-600 shadow-sm">
+        กำลังโหลดรายการครุภัณฑ์ย่อย...
+      </section>
+    } @else if (loadError()) {
+      <section class="rounded-xl border border-red-200 bg-white p-10 text-center text-sm font-medium text-red-700 shadow-sm">
+        โหลดรายการครุภัณฑ์ย่อยไม่สำเร็จ
+      </section>
+    } @else {
+      <app-data-table
+        [showTableHeader]="false"
+        [data]="subItems()"
+        [columns]="columns"
+        [badgeColors]="badgeColors"
+        [clickableBadgeColumns]="['status']"
+        [clickableBadgeValues]="{ status: ['จำหน่ายแล้ว'] }"
+        [clickableBadgeActionLabels]="{ status: 'ดูรายละเอียดการจำหน่าย' }"
+        [idKey]="'asset_sub_item_id'"
+        [totalItems]="assets?.count ?? 0"
+        [pageSize]="Params.pageSize"
+        [currentPage]="Params.pageNumber"
+        [sortOptions]="sortOptions"
+        [isAdmin]="false"
+        (search)="onSearch($event)"
+        (sortChange)="onSort($event)"
+        (pageChange)="onPageChange($event)"
+        (action)="handleTableAction($event)"
+      ></app-data-table>
+    }
+  </main>
+</div>
+
+@if (disposalLoading()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+    <div class="rounded-xl bg-white px-6 py-5 text-sm font-medium text-slate-700 shadow-xl">
+      กำลังโหลดรายละเอียดการจำหน่าย...
+    </div>
+  </div>
+}
+
+@if (disposalInfo(); as disposal) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+    (click)="closeDisposalDetails()"
+  >
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="disposal-details-title"
+      class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="flex items-center justify-between bg-blue-900 px-6 py-4 text-white">
+        <div>
+          <p class="text-sm text-blue-100">สถานะ: จำหน่ายแล้ว</p>
+          <h2 id="disposal-details-title" class="text-xl font-bold">รายละเอียดการจำหน่าย</h2>
+        </div>
+        <button
+          type="button"
+          aria-label="ปิดรายละเอียด"
+          class="rounded-lg px-3 py-2 text-white hover:bg-blue-800"
+          (click)="closeDisposalDetails()"
+        >
+          ✕
+        </button>
+      </header>
+
+      <dl class="grid gap-4 p-6 sm:grid-cols-2">
+        <div class="rounded-lg bg-slate-50 p-4 sm:col-span-2">
+          <dt class="text-sm text-slate-500">ครุภัณฑ์ย่อย</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ disposalItemName() || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm text-slate-500">วันที่จำหน่าย</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ disposal.disposal_date | thaiDate }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm text-slate-500">วิธีจำหน่าย</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ disposal.disposal_method || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm text-slate-500">จำนวนที่จำหน่าย</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ disposal.quantity_disposed ?? '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm text-slate-500">เลขที่เอกสาร</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ disposal.document_no || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4 sm:col-span-2">
+          <dt class="text-sm text-slate-500">สาเหตุการจำหน่าย</dt>
+          <dd class="mt-1 whitespace-pre-wrap font-semibold text-slate-900">{{ disposal.disposal_reason || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm text-slate-500">ผู้อนุมัติ</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ disposal.approved_by || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm text-slate-500">หมายเหตุ</dt>
+          <dd class="mt-1 whitespace-pre-wrap font-semibold text-slate-900">{{ disposal.notes || '-' }}</dd>
+        </div>
+      </dl>
+
+      <footer class="flex justify-end border-t border-slate-200 px-6 py-4">
+        <button
+          type="button"
+          class="rounded-lg bg-blue-900 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-950"
+          (click)="closeDisposalDetails()"
+        >
+          ปิด
+        </button>
+      </footer>
+    </section>
+  </div>
+}

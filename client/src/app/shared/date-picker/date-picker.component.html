@@ -1,0 +1,46 @@
+<div class="space-y-2 group">
+  <label
+    class="flex items-center gap-1 text-sm font-bold text-slate-700 group-focus-within:text-emerald-600 transition-colors"
+  >
+    {{ label }}
+  </label>
+
+  <div class="relative">
+  <input
+    type="text"
+    [formControl]="control"
+    [placeholder]="placeholder"
+    [class.pr-14]="showCalendarIcon || clearable"
+    mwlFlatpickr
+    [altInput]="true"
+    [convertModelValue]="true"
+    [locale]="thaiLocale"
+    [monthSelectorType]="'dropdown'"
+    dateFormat="Y-m-d"
+    altFormat="j F Y"
+    (flatpickrReady)="formatThaiYear($event)"
+    (flatpickrChange)="formatThaiYear($event)"
+    (flatpickrMonthChange)="formatThaiYear($event)"
+    (flatpickrYearChange)="formatThaiYear($event)"
+    class="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200"
+  />
+  @if (clearable && control.value) {
+    <button type="button" (click)="clearDate()" [disabled]="control.disabled"
+      aria-label="ล้างวันที่" title="ล้างวันที่"
+      class="absolute top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-sm font-bold text-slate-700 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+      [class.right-12]="showCalendarIcon" [class.right-3]="!showCalendarIcon">
+      ✕
+    </button>
+  }
+  @if (showCalendarIcon) {
+    <button type="button" (click)="openCalendar()" [disabled]="control.disabled"
+      aria-label="เปิดปฏิทินเลือกวันที่" title="เลือกวันที่"
+      class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50">
+      <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 11h18M8 15h2M14 15h2" />
+      </svg>
+    </button>
+  }
+  </div>
+</div>

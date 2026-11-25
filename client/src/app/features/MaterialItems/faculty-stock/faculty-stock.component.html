@@ -1,0 +1,743 @@
+<main class="min-h-screen bg-[#eef3f0] px-4 py-6 sm:px-6 lg:px-8 2xl:px-10">
+  <div class="mx-auto w-full max-w-[1720px] space-y-5">
+
+    <!-- Official Header Banner -->
+    <header class="rounded-xl border border-slate-300 border-l-[6px] border-l-emerald-800 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="space-y-2">
+          <!-- Official Badge -->
+          <div class="inline-flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-900">
+            <span class="h-2 w-2 rounded-full bg-emerald-700"></span>
+            <span>ระบบบริหารจัดการพัสดุและคลังวัสดุ</span>
+            <span class="text-emerald-400">|</span>
+            <span>{{ yearLabel() ? 'ประจำปีงบประมาณ พ.ศ. ' + yearLabel() : 'ทุกปีงบประมาณ' }}</span>
+          </div>
+
+          <!-- Main Title -->
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            รายงานวัสดุคงเหลือ (ระดับคณะ)
+          </h1>
+
+          <!-- Official Description -->
+          <p class="max-w-3xl text-sm leading-relaxed text-slate-800">
+            รายงานสรุปยอดพัสดุคงคลังรวมจากทุกสาขาและคลังกลางพัสดุ โดยไม่นับการโอนย้ายภายในเป็นการรับหรือจ่าย เพื่อแสดงยอดรับ-จ่ายจริงและยอดคงเหลือสุทธิ
+          </p>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" (click)="openPdfExport()" class="inline-flex items-center gap-2 rounded-lg border border-emerald-900 bg-emerald-800 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-emerald-900">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
+            </svg>
+            <span>ส่งออก PDF</span>
+          </button>
+          <button
+            type="button"
+            (click)="refresh()"
+            [disabled]="loading()"
+            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xs transition hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 disabled:opacity-50"
+            title="รีเฟรชข้อมูลล่าสุด"
+          >
+            <svg class="h-4 w-4" [class.animate-spin]="loading()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>รีเฟรชข้อมูล</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filters & Search Section -->
+    <section class="rounded-xl border border-slate-300 bg-white p-5 shadow-sm sm:p-6">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <!-- Controls Container -->
+        <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end">
+          <!-- Fiscal Year Dropdown -->
+          <div class="w-full sm:w-64">
+            <label for="faculty-year" class="mb-1.5 block text-sm font-bold uppercase tracking-wide text-slate-700">
+              ปีงบประมาณ
+            </label>
+            <div class="relative">
+              <select
+                id="faculty-year"
+                [ngModel]="yearId()"
+                (ngModelChange)="onYearChange($event)"
+                class="h-11 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-3.5 pr-10 text-sm font-semibold text-slate-800 shadow-2xs outline-none transition hover:border-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700"
+              >
+                <option [ngValue]="null">ทุกปีงบประมาณ</option>
+                @for (year of years(); track year.fiscal_year_id) {
+                  <option [ngValue]="year.fiscal_year_id">ปีงบประมาณ {{ year.fiscal_year }}</option>
+                }
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-700">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Input -->
+          <div class="w-full sm:max-w-md">
+            <label for="faculty-search" class="mb-1.5 block text-sm font-bold uppercase tracking-wide text-slate-700">
+              ค้นหาชื่อพัสดุ หรือ รหัส
+            </label>
+            <div class="relative flex h-11 items-center rounded-lg border border-slate-300 bg-white px-3.5 shadow-2xs transition hover:border-slate-400 focus-within:border-emerald-700 focus-within:ring-1 focus-within:ring-emerald-700">
+              <svg class="h-4 w-4 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                id="faculty-search"
+                type="search"
+                [ngModel]="search"
+                (ngModelChange)="onSearch($event)"
+                placeholder="ระบุชื่อวัสดุ หรือ รหัสพัสดุ..."
+                class="ml-2.5 w-full border-0 bg-transparent text-sm font-medium text-slate-800 placeholder-slate-600 outline-none"
+              />
+              @if (search) {
+                <button
+                  type="button"
+                  (click)="clearSearch()"
+                  class="ml-1 rounded-md p-1 text-slate-600 hover:bg-slate-100 hover:text-slate-700"
+                  title="ล้างคำค้นหา"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (tab() === 'departments') {
+            <div class="w-full sm:w-72">
+              <label for="faculty-department" class="mb-1.5 block text-sm font-bold tracking-wide text-slate-700">สาขา / หน่วยงาน</label>
+              <select id="faculty-department" [ngModel]="departmentId()" (ngModelChange)="onDepartmentChange($event)" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800">
+                <option [ngValue]="null">ทุกสาขาและส่วนกลาง</option>
+                @for (department of departmentOptions(); track department.department_id) {
+                  <option [ngValue]="department.department_id">{{ department.department_name }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- Toggle: Only Remaining -->
+          <div class="sm:self-end">
+            <button
+              type="button"
+              (click)="onRemainingChange(!onlyRemaining())"
+              class="flex h-11 items-center gap-2.5 rounded-lg border px-4 text-sm font-bold transition shadow-2xs"
+              [class]="onlyRemaining()
+                ? 'border-emerald-700 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-700'
+                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400'"
+            >
+              <div
+                class="flex h-4.5 w-4.5 items-center justify-center rounded border transition-colors"
+                [class]="onlyRemaining() ? 'border-emerald-800 bg-emerald-800 text-white' : 'border-slate-400 bg-white'"
+              >
+                @if (onlyRemaining()) {
+                  <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                }
+              </div>
+              <span>เฉพาะรายการที่มีคงเหลือ</span>
+              @if (onlyRemaining()) {
+                <span class="rounded bg-emerald-200 px-2 py-0.5 text-sm font-extrabold text-emerald-900">
+                  {{ inStockCount() }}
+                </span>
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Side: Items count & Reset Filter Button -->
+        <div class="flex flex-wrap items-center gap-3 pt-2 lg:pt-0">
+          <div class="rounded-lg bg-slate-100 border border-slate-300 px-3.5 py-2 text-sm font-bold text-slate-700">
+            แสดง {{ visibleItems().length }} จาก {{ totalAllItems() }} รายการ
+          </div>
+
+          @if (search || yearId() || onlyRemaining() || (tab() === 'departments' && departmentId())) {
+            <button
+              type="button"
+              (click)="resetFilters()"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800 transition hover:bg-rose-100"
+            >
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>ล้างตัวกรอง</span>
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Report Tabs -->
+    <nav class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white p-2 shadow-sm" aria-label="รูปแบบรายงาน">
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          (click)="onTabChange('faculty')"
+          [attr.aria-pressed]="tab() === 'faculty'"
+          class="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold transition"
+          [class]="tab() === 'faculty'
+            ? 'bg-emerald-700 text-white shadow-xs border border-emerald-800'
+            : 'border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'"
+        >
+          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span>รายงานวัสดุคงเหลือทั้งคณะ</span>
+          <span
+            class="rounded-full px-2 py-0.5 text-sm font-extrabold"
+            [class]="tab() === 'faculty' ? 'bg-emerald-800 text-white' : 'bg-slate-200 text-slate-800'"
+          >
+            {{ visibleItems().length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onTabChange('departments')"
+          [attr.aria-pressed]="tab() === 'departments'"
+          class="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold transition"
+          [class]="tab() === 'departments'
+            ? 'bg-emerald-700 text-white shadow-xs border border-emerald-800'
+            : 'border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'"
+        >
+          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span>รายงานวัสดุคงเหลือตามสาขา</span>
+          <span
+            class="rounded-full px-2 py-0.5 text-sm font-extrabold"
+            [class]="tab() === 'departments' ? 'bg-emerald-800 text-white' : 'bg-slate-200 text-slate-800'"
+          >
+            {{ visibleDepartmentGroups().length }} สาขา
+          </span>
+        </button>
+      </div>
+
+      <div class="hidden text-sm font-semibold text-slate-800 xl:block px-3">
+        {{ tab() === 'faculty' ? '• สรุปยอดรวมระดับคณะ (ตัดการโอนย้ายภายใน)' : '• สรุปยอดแยกตามคลังสาขาและส่วนกลาง' }}
+      </div>
+    </nav>
+
+    <!-- Error Alert -->
+    @if (error()) {
+      <div class="flex items-center gap-3 rounded-lg border border-rose-300 bg-rose-50 p-4 text-rose-900" role="alert">
+        <svg class="h-5 w-5 text-rose-800 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm font-bold">ไม่สามารถดึงข้อมูลรายงานได้ กรุณากดปุ่มรีเฟรชหรือตรวจสอบการเชื่อมต่อ</span>
+        <button type="button" (click)="refresh()" class="ml-auto rounded-md bg-rose-200 border border-rose-300 px-3 py-1 text-sm font-bold text-rose-950 hover:bg-rose-300">
+          ลองใหม่
+        </button>
+      </div>
+    }
+
+    <!-- TAB 1: รายงานวัสดุคงเหลือทั้งคณะ -->
+    @if (tab() === 'faculty') {
+      <section class="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+        <!-- Table Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-slate-100 px-6 py-3.5">
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-slate-800">
+              ตารางแสดงยอดวัสดุคงคลังรวมทั้งคณะ
+            </h2>
+          </div>
+
+          @if (loading()) {
+            <div class="flex items-center gap-2 text-sm font-bold text-emerald-900">
+              <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-400 border-t-emerald-900"></span>
+              <span>กำลังโหลดข้อมูล...</span>
+            </div>
+          }
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[1100px] border-collapse text-left text-base">
+            <thead>
+              <tr class="border-b-2 border-emerald-950 bg-emerald-800 text-sm font-bold uppercase tracking-wider text-white">
+                <th scope="col" class="w-14 px-3 py-3.5 text-center border-r border-emerald-700/60">ลำดับ</th>
+                <th scope="col" class="px-5 py-3.5 border-r border-emerald-700/60">รหัส / รายละเอียดวัสดุ</th>
+                <th scope="col" class="w-24 px-3 py-3.5 text-center border-r border-emerald-700/60">หน่วยนับ</th>
+                <th scope="col" class="px-4 py-3.5 text-right border-r border-emerald-700/60">ยอดยกมา</th>
+                <th scope="col" class="px-4 py-3.5 text-right border-r border-emerald-700/60">รับเข้า</th>
+                <th scope="col" class="px-4 py-3.5 text-right border-r border-emerald-700/60">จ่ายออก</th>
+                <th scope="col" class="bg-emerald-900 px-5 py-3.5 text-right font-extrabold text-white border-r border-emerald-950">คงเหลือ</th>
+                <th scope="col" class="px-4 py-3.5 text-right border-r border-emerald-700/60">ราคา/หน่วย</th>
+                <th scope="col" class="px-4 py-3.5 text-right border-r border-emerald-700/60">รวมเป็นเงิน</th>
+                <th scope="col" class="w-28 px-4 py-3.5 text-center">รายละเอียด</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              @for (item of visibleItems(); track item.material_item_id; let idx = $index) {
+                <tr
+                  class="transition-colors hover:bg-emerald-50/70"
+                  [class]="idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'"
+                >
+                  <!-- ลำดับ -->
+                  <td class="px-3 py-3.5 text-center text-sm font-semibold text-slate-700 tabular-nums border-r border-slate-200">
+                    {{ idx + 1 }}
+                  </td>
+
+                  <!-- รายละเอียดวัสดุ -->
+                  <td class="px-5 py-3.5 border-r border-slate-200">
+                    <div class="font-bold text-slate-900">
+                      {{ item.material_name }}
+                    </div>
+                    <div class="mt-1 flex flex-wrap items-center gap-2">
+                      @if (item.material_code) {
+                        <span class="inline-block rounded border border-slate-300 bg-slate-100 px-2 py-0.5 font-mono text-sm font-bold text-slate-800">
+                          {{ item.material_code }}
+                        </span>
+                      } @else {
+                        <span class="text-sm text-slate-600 font-mono">-</span>
+                      }
+                      @if (item.has_discrepancy) {
+                        <span class="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-100 px-2 py-0.5 text-sm font-bold text-amber-900">
+                          ⚠️ มีข้อมูลต้องตรวจสอบ
+                        </span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- หน่วยนับ -->
+                  <td class="px-3 py-3.5 text-center text-sm font-semibold text-slate-700 border-r border-slate-200">
+                    {{ item.unit_name || '-' }}
+                  </td>
+
+                  <!-- ยอดยกมา -->
+                  <td class="px-4 py-3.5 text-right tabular-nums font-semibold text-slate-700 border-r border-slate-200">
+                    {{ item.opening_balance | number:'1.0-2' }}
+                  </td>
+
+                  <!-- รับเข้า -->
+                  <td class="px-4 py-3.5 text-right tabular-nums border-r border-slate-200">
+                    @if (item.quantity_in > 0) {
+                      <span class="font-bold text-emerald-800">{{ item.quantity_in | number:'1.0-2' }}</span>
+                    } @else {
+                      <span class="text-slate-600">0</span>
+                    }
+                  </td>
+
+                  <!-- จ่ายออก -->
+                  <td class="px-4 py-3.5 text-right tabular-nums border-r border-slate-200">
+                    @if (item.quantity_out > 0) {
+                      <span class="font-bold text-rose-800">{{ item.quantity_out | number:'1.0-2' }}</span>
+                    } @else {
+                      <span class="text-slate-600">0</span>
+                    }
+                  </td>
+
+                  <!-- คงเหลือ (เน้นชัดเจน ไม่กลืน) -->
+                  <td class="px-5 py-3.5 text-right border-r border-slate-200" [class]="item.current_balance > 0 ? 'bg-emerald-50/60' : ''">
+                    <span
+                      class="inline-block min-w-16 rounded px-2.5 py-1 text-right font-extrabold tabular-nums text-sm border"
+                      [class]="item.current_balance < 0
+                        ? 'border-rose-400 bg-rose-100 text-rose-900'
+                        : item.current_balance > 0
+                          ? 'border-emerald-500 bg-emerald-100 text-emerald-950'
+                          : 'border-slate-300 bg-slate-100 text-slate-600'"
+                    >
+                      {{ item.current_balance | number:'1.0-2' }}
+                    </span>
+                  </td>
+
+                  <!-- ราคา/หน่วย -->
+                  <td class="px-4 py-3.5 text-right tabular-nums font-medium text-slate-700 border-r border-slate-200">
+                    {{ item.unit_price === null ? '-' : (item.unit_price | number:'1.2-2') }}
+                  </td>
+
+                  <!-- รวมเป็นเงิน -->
+                  <td class="px-4 py-3.5 text-right font-bold tabular-nums text-slate-900 border-r border-slate-200">
+                    @if (item.total_amount === null) {
+                      <span class="text-sm font-normal text-amber-800">รอตรวจสอบ</span>
+                    } @else {
+                      {{ item.total_amount | number:'1.2-2' }}
+                    }
+                  </td>
+
+                  <!-- รายละเอียด -->
+                  <td class="px-4 py-3.5 text-center">
+                    <a
+                      [routerLink]="['/admin/MaterialItem/faculty-stock', item.material_item_id]"
+                      [queryParams]="{ fiscal_year_id: item.fiscal_year_id }"
+                      class="inline-flex items-center gap-1 rounded-md border border-emerald-700 bg-white px-3 py-1.5 text-sm font-bold text-emerald-800 shadow-2xs transition hover:bg-emerald-700 hover:text-white"
+                    >
+                      <span>รายละเอียด</span>
+                      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="10" class="px-6 py-16 text-center">
+                    <div class="mx-auto flex max-w-sm flex-col items-center justify-center">
+                      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 border border-slate-300 text-slate-700">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                      </div>
+                      <h3 class="mt-3 text-sm font-bold text-slate-800">
+                        {{ loading() ? 'กำลังโหลดข้อมูลรายงาน...' : 'ไม่พบรายการวัสดุที่ค้นหา' }}
+                      </h3>
+                      <p class="mt-1 text-sm text-slate-700">
+                        {{ loading() ? 'ระบบกำลังประมวลผลข้อมูลคงคลัง' : 'โปรดตรวจสอบคำค้นหาหรือตัวกรองที่เลือก' }}
+                      </p>
+                      @if (!loading() && (search || onlyRemaining() || yearId())) {
+                        <button
+                          type="button"
+                          (click)="resetFilters()"
+                          class="mt-3 rounded-lg bg-emerald-800 border border-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-900"
+                        >
+                          ล้างตัวกรองทั้งหมด
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+
+            <!-- Table Summary Footer (สรุปยอดรวมราชการชัดเจน) -->
+            @if (visibleItems().length > 0) {
+              <tfoot class="border-t-2 border-emerald-950 bg-emerald-100/90 font-bold text-slate-900">
+                <tr>
+                  <td class="px-4 py-4 text-center text-sm uppercase font-extrabold text-emerald-950 border-r border-emerald-200" colspan="3">
+                    ยอดรวมสุทธิ ({{ visibleItems().length }} รายการ)
+                  </td>
+                  <td class="px-4 py-4 text-right tabular-nums text-slate-800 border-r border-emerald-200">
+                    {{ totalOpeningBalance() | number:'1.0-2' }}
+                  </td>
+                  <td class="px-4 py-4 text-right tabular-nums text-emerald-900 border-r border-emerald-200">
+                    {{ totalQuantityIn() | number:'1.0-2' }}
+                  </td>
+                  <td class="px-4 py-4 text-right tabular-nums text-rose-900 border-r border-emerald-200">
+                    {{ totalQuantityOut() | number:'1.0-2' }}
+                  </td>
+                  <td class="px-5 py-4 text-right tabular-nums text-base font-extrabold text-emerald-950 border-r border-emerald-300 bg-emerald-200/80">
+                    {{ totalCurrentBalance() | number:'1.0-2' }}
+                  </td>
+                  <td class="px-4 py-4 text-right text-sm font-bold text-emerald-900 border-r border-emerald-200">
+                    มูลค่ารวม
+                  </td>
+                  <td class="px-4 py-4 text-right tabular-nums text-emerald-950 font-extrabold border-r border-emerald-200">
+                    {{ totalStockValue() | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-4 text-center text-sm text-slate-800">บาท</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- TAB 2: รายงานวัสดุคงเหลือตามสาขา -->
+    @if (tab() === 'departments') {
+      <div class="space-y-4">
+        <!-- Control Header for Departments -->
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <span class="text-base font-bold text-slate-800">
+                ยอดวัสดุคงเหลือแยกตามรายสาขา ({{ visibleDepartmentGroups().length }} หน่วยงาน)
+              </span>
+              <span class="block text-sm font-medium text-slate-700 sm:inline sm:ml-2">
+                • แสดงยอดตามบัตรคุมพัสดุของแต่ละหน่วยงาน
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="expandAllDepartments()"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600/30 bg-emerald-50 px-3.5 py-1.5 text-sm font-bold text-emerald-800 shadow-2xs hover:bg-emerald-100 transition"
+            >
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+              <span>ขยายทั้งหมด</span>
+            </button>
+            <button
+              type="button"
+              (click)="collapseAllDepartments()"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+            >
+              <svg class="h-3.5 w-3.5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
+              </svg>
+              <span>ยุบทั้งหมด</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Department Groups Accordion List -->
+        @for (group of visibleDepartmentGroups(); track group.department_id; let i = $index) {
+          <section class="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm transition hover:shadow-md">
+            <!-- Department Header Bar (แถบหัวข้อสาขาสีชัดเจน ไม่ขาว ไม่กลืนพื้นหลัง และสบายตา) -->
+            <button
+              type="button"
+              (click)="toggleDepartment(group.department_id)"
+              [attr.aria-expanded]="!collapsedDepartments().has(group.department_id)"
+              [attr.aria-controls]="'department-stock-' + group.department_id"
+              class="flex w-full flex-wrap items-center justify-between gap-4 p-4 sm:p-4.5 text-left transition"
+              [class]="isCentral(group.department_id)
+                ? 'bg-emerald-950 text-white hover:bg-emerald-900 ' + (!collapsedDepartments().has(group.department_id) ? 'border-b border-emerald-900' : '')
+                : 'bg-emerald-800 text-white hover:bg-emerald-900 ' + (!collapsedDepartments().has(group.department_id) ? 'border-b border-emerald-900' : '')"
+            >
+              <!-- Left side: Index Badge + Department Name + Subtext -->
+              <div class="flex items-center gap-3.5">
+                <span
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-bold text-sm shadow-xs"
+                  [class]="isCentral(group.department_id)
+                    ? 'bg-amber-300 text-emerald-950'
+                    : 'bg-white text-emerald-800'"
+                >
+                  {{ i + 1 }}
+                </span>
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-base font-bold text-white sm:text-lg">
+                      {{ group.department_name }}
+                    </span>
+                    @if (isCentral(group.department_id)) {
+                      <span class="inline-flex items-center gap-1 rounded-md bg-amber-300 px-2.5 py-0.5 text-sm font-bold text-emerald-950 shadow-xs">
+                        ★ ส่วนกลางพัสดุ
+                      </span>
+                    }
+                  </div>
+                  <span class="mt-0.5 block text-sm font-normal" class="text-white">
+                    มีรายการพัสดุทั้งสิ้น {{ group.rows.length }} ชนิด
+                  </span>
+                </div>
+              </div>
+
+              <!-- Right side: Valuation + Chevron -->
+              <div class="flex items-center gap-4 sm:gap-6">
+                <div class="text-right">
+                  <span class="block text-sm font-semibold uppercase tracking-wide text-white">
+                    มูลค่าคงเหลือของสาขา
+                  </span>
+                  <span class="mt-0.5 block font-bold tabular-nums text-white text-base sm:text-lg">
+                    {{ group.missingPrice ? 'รอตรวจสอบราคา' : (group.total | number:'1.2-2') + ' บาท' }}
+                  </span>
+                </div>
+
+                <div
+                  class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white shadow-2xs transition-transform duration-200 hover:bg-white/30"
+                  [class.rotate-180]="!collapsedDepartments().has(group.department_id)"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+
+            <!-- Expanded Department Items Table (ตารางภายในสาขา โทนสีสบายตา มีขอบเขตชัดเจน) -->
+            @if (!collapsedDepartments().has(group.department_id)) {
+              <div class="overflow-x-auto bg-white" [id]="'department-stock-' + group.department_id">
+                <table class="w-full min-w-[1100px] border-collapse text-left text-base">
+                  <thead>
+                    <tr class="border-b-2 border-slate-300 bg-slate-100 text-sm font-bold uppercase tracking-wider text-slate-700">
+                      <th scope="col" class="w-12 px-3 py-3 text-center border-r border-slate-200">ลำดับ</th>
+                      <th scope="col" class="w-[32%] px-4 py-3 border-r border-slate-200">รหัส / รายละเอียดวัสดุ</th>
+                      <th scope="col" class="w-24 px-3 py-3 text-center border-r border-slate-200">หน่วยนับ</th>
+                      <th scope="col" class="px-3 py-3 text-right border-r border-slate-200">ยอดยกมา</th>
+                      <th scope="col" class="px-3 py-3 text-right border-r border-slate-200">รับเข้า</th>
+                      <th scope="col" class="px-3 py-3 text-right border-r border-slate-200">จ่ายออก</th>
+                      <th scope="col" class="bg-emerald-100 px-4 py-3 text-right font-extrabold text-emerald-950 border-r border-emerald-200">คงเหลือ</th>
+                      <th scope="col" class="px-3 py-3 text-right border-r border-slate-200">ราคา/หน่วย</th>
+                      <th scope="col" class="px-3 py-3 text-right border-r border-slate-200">รวมเป็นเงิน</th>
+                      <th scope="col" class="w-28 px-4 py-3 text-center">บัตรคุม</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    @for (item of group.rows; track item.material_item_id; let rowIdx = $index) {
+                      <tr
+                        class="transition hover:bg-emerald-50/60"
+                        [class]="rowIdx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'"
+                      >
+                        <!-- ลำดับ -->
+                        <td class="px-3 py-3.5 text-center text-sm font-medium text-slate-700 tabular-nums border-r border-slate-200">
+                          {{ rowIdx + 1 }}
+                        </td>
+
+                        <!-- รายการพัสดุ -->
+                        <td class="px-4 py-3.5 border-r border-slate-200">
+                          <div class="font-bold text-slate-900">{{ item.material_name }}</div>
+                          <div class="mt-1 flex items-center gap-2">
+                            <span class="font-mono text-sm font-semibold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded">
+                              {{ item.material_code || '-' }}
+                            </span>
+                            @if (item.current_balance < 0) {
+                              <span class="rounded border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-sm font-bold text-rose-800">
+                                ยอดติดลบ
+                              </span>
+                            }
+                          </div>
+                        </td>
+
+                        <!-- หน่วยนับ -->
+                        <td class="px-3 py-3.5 text-center text-sm font-medium text-slate-700 border-r border-slate-200">
+                          {{ item.unit_name || '-' }}
+                        </td>
+
+                        <!-- ยอดยกมา -->
+                        <td class="px-3 py-3.5 text-right tabular-nums font-medium text-slate-700 border-r border-slate-200">
+                          {{ item.opening_balance | number:'1.0-2' }}
+                        </td>
+
+                        <!-- รับเข้า -->
+                        <td class="px-3 py-3.5 text-right tabular-nums border-r border-slate-200">
+                          @if (item.quantity_in > 0) {
+                            <span class="font-semibold text-emerald-700">{{ item.quantity_in | number:'1.0-2' }}</span>
+                          } @else {
+                            <span class="text-slate-600">0</span>
+                          }
+                        </td>
+
+                        <!-- จ่ายออก -->
+                        <td class="px-3 py-3.5 text-right tabular-nums border-r border-slate-200">
+                          @if (item.quantity_out > 0) {
+                            <span class="font-semibold text-rose-800">{{ item.quantity_out | number:'1.0-2' }}</span>
+                          } @else {
+                            <span class="text-slate-600">0</span>
+                          }
+                        </td>
+
+                        <!-- คงเหลือ (เน้นชัดเจน ดูง่าย สบายตา) -->
+                        <td class="px-4 py-3.5 text-right border-r border-slate-200" [class]="item.current_balance > 0 ? 'bg-emerald-50/40' : ''">
+                          <span
+                            class="inline-block min-w-14 rounded px-2.5 py-1 text-right text-sm tabular-nums border"
+                            [class]="item.current_balance < 0
+                              ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold'
+                              : item.current_balance > 0
+                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold'
+                                : 'border-slate-300 bg-slate-100 text-slate-600 font-medium'"
+                          >
+                            {{ item.current_balance | number:'1.0-2' }}
+                          </span>
+                        </td>
+
+                        <!-- ราคา/หน่วย -->
+                        <td class="px-3 py-3.5 text-right tabular-nums font-medium text-slate-700 border-r border-slate-200">
+                          {{ item.unit_price === null ? '-' : (item.unit_price | number:'1.2-2') }}
+                        </td>
+
+                        <!-- รวมเป็นเงิน -->
+                        <td class="px-3 py-3.5 text-right font-bold tabular-nums text-slate-900 border-r border-slate-200">
+                          {{ item.unit_price === null ? (item.current_balance === 0 ? '0.00' : 'รอตรวจสอบ') : (item.current_balance * item.unit_price | number:'1.2-2') }}
+                        </td>
+
+                        <!-- บัตรคุม -->
+                        <td class="px-4 py-3.5 text-center">
+                          <a
+                            [routerLink]="['/admin/MaterialStockCard', item.material_item_id]"
+                            [queryParams]="{
+                              department_id: group.department_id,
+                              fiscal_year_id: yearId(),
+                              from: 'faculty-stock-departments',
+                              selected_department_id: departmentId(),
+                              search: search || null,
+                              remaining: onlyRemaining() ? 'true' : null
+                            }"
+                            class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-sm font-semibold text-slate-700 shadow-2xs hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 transition"
+                          >
+                            <span>บัตรคุม</span>
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </a>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="10" class="px-6 py-8 text-center text-sm font-medium text-slate-700">
+                          ไม่พบรายการพัสดุในสาขานี้ตามตัวกรองที่เลือก
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+
+                  <!-- Department Subtotal Summary Row (แถวสรุปยอดรวมของสาขา) -->
+                  <tfoot class="border-t-2 border-slate-300 bg-slate-100 font-bold text-slate-800">
+                    <tr>
+                      <td colspan="3" class="px-4 py-3.5 text-sm uppercase font-bold text-slate-700 border-r border-slate-200">
+                        รวมยอดคงเหลือ {{ group.department_name }} ({{ group.rows.length }} ชนิด)
+                      </td>
+                      <td colspan="3" class="border-r border-slate-200"></td>
+                      <td class="px-4 py-3.5 text-right font-bold text-sm text-slate-800 border-r border-slate-200">
+                        มูลค่ารวมสาขา
+                      </td>
+                      <td class="border-r border-slate-200"></td>
+                      <td class="px-3 py-3.5 text-right font-bold tabular-nums text-emerald-800 border-r border-slate-200 text-sm sm:text-base">
+                        {{ group.missingPrice ? 'รอตรวจสอบราคา' : (group.total | number:'1.2-2') }}
+                      </td>
+                      <td class="px-4 py-3.5 text-center text-sm font-semibold text-slate-800">
+                        {{ group.missingPrice ? '' : 'บาท' }}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            }
+          </section>
+        } @empty {
+          <div class="rounded-xl border border-slate-300 bg-white p-12 text-center text-slate-800 shadow-2xs">
+            <p class="text-sm font-semibold">{{ loading() ? 'กำลังโหลดรายงาน...' : 'ไม่พบรายการข้อมูลสาขา' }}</p>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</main>
+
+@if (exportOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <section role="dialog" aria-modal="true" aria-labelledby="pdf-title" class="w-full max-w-lg space-y-4 rounded-xl border border-slate-300 border-t-[6px] border-t-emerald-800 bg-white p-6 shadow-xl">
+      <h2 id="pdf-title" class="text-xl font-bold text-emerald-950">ส่งออกรายงาน PDF</h2>
+      <p class="text-sm text-slate-800">A4 แนวนอน · ฟอนต์ TH Sarabun New</p>
+      <label class="block text-sm font-semibold">ปีงบประมาณ
+        <select [(ngModel)]="exportYearId" [disabled]="exporting()" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          <option [ngValue]="null">ทุกปีงบประมาณ</option>
+          @for (year of years(); track year.fiscal_year_id) { <option [ngValue]="year.fiscal_year_id">{{ year.fiscal_year }}</option> }
+        </select>
+      </label>
+      <label class="block text-sm font-semibold">รูปแบบรายงาน
+        <select [(ngModel)]="exportScope" [disabled]="exporting()" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          <option value="faculty">วัสดุคงเหลือทั้งคณะ</option>
+          <option value="departments">วัสดุคงเหลือตามสาขา</option>
+        </select>
+      </label>
+      @if (exportScope === 'departments') {
+        <label class="block text-sm font-semibold">สาขา
+          <select [(ngModel)]="exportDepartmentId" [disabled]="exporting()" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+            <option [ngValue]="null">ทุกสาขา (เริ่มหน้าใหม่แต่ละสาขา)</option>
+            @for (department of departmentOptions(); track department.department_id) { <option [ngValue]="department.department_id">{{ department.department_name }}</option> }
+          </select>
+        </label>
+      }
+      <p class="text-sm text-slate-700">ใช้คำค้นและตัวกรองคงเหลือจากหน้ารายงานปัจจุบัน เว้นช่องประเภทเงิน หมายเหตุ ร้านค้า หน่วยงาน ผู้เบิก และเลขที่เอกสารไว้</p>
+      @if (exportError()) { <p role="alert" class="text-sm text-red-700">{{ exportError() }}</p> }
+      <div class="flex justify-end gap-3">
+        <button type="button" (click)="exportOpen.set(false)" [disabled]="exporting()" class="rounded-lg border px-4 py-2 disabled:opacity-50">ยกเลิก</button>
+        <button type="button" (click)="downloadPdf()" [disabled]="exporting()" class="rounded-lg border border-emerald-900 bg-emerald-800 px-4 py-2 font-bold text-white hover:bg-emerald-900 disabled:opacity-50">{{ exporting() ? 'กำลังสร้าง PDF…' : 'ดาวน์โหลด PDF' }}</button>
+      </div>
+    </section>
+  </div>
+}

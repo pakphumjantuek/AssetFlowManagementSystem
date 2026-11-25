@@ -1,0 +1,682 @@
+/* ===================================================================
+   Material Withdrawal Export Studio — 1-Page Layout (No Scroll)
+   =================================================================== */
+
+:host {
+  display: block;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.export-page-container {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background-color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Sarabun', sans-serif;
+}
+
+/* ── Top Header Bar ────────────────────────────────────────── */
+.export-header-bar {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 10px rgba(6, 78, 59, 0.2);
+  z-index: 30;
+}
+
+.header-inner-content {
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  @media (min-width: 1024px) {
+    padding: 0.75rem 2rem;
+  }
+}
+
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateX(-2px);
+  }
+}
+
+.header-title-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.badge-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #d1fae5;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  width: fit-content;
+
+  &.badge-tag-blue {
+    background: rgba(14, 165, 233, 0.2);
+    border-color: rgba(14, 165, 233, 0.4);
+    color: #e0f2fe;
+  }
+}
+
+.page-main-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+
+  @media (min-width: 768px) {
+    font-size: 1.35rem;
+  }
+}
+
+.header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.status-pill-issued {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  &.status-pill-draft {
+    background: rgba(254, 243, 199, 0.95);
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+}
+
+.pill-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background-color: #f59e0b;
+}
+
+.btn-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.55rem;
+  font-size: 0.775rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.18s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+  }
+}
+
+/* ── Main Layout Body (Strictly 1-Page Height) ─────────────── */
+.export-main-content {
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 60px);
+  max-width: 1920px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 1rem;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  @media (min-width: 1024px) {
+    padding: 0.85rem 1.75rem 1.15rem;
+  }
+}
+
+.export-layout-grid {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* ── Left Sidebar (Controls) ───────────────────────────────── */
+.export-sidebar {
+  width: 380px;
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+
+  @media (min-width: 1440px) {
+    width: 420px;
+  }
+}
+
+/* Panel Cards */
+.panel-card {
+  background: #ffffff;
+  border-radius: 0.85rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.panel-card-header {
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #fafafa;
+}
+
+.icon-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel-card-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.panel-card-subtitle {
+  margin: 0.05rem 0 0;
+  font-size: 0.725rem;
+  color: #64748b;
+}
+
+.panel-card-body {
+  padding: 1rem 1.1rem;
+}
+
+/* Loading state box */
+.loading-state-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 1.5rem 1rem;
+}
+
+/* Control Fields */
+.control-field-group {
+  margin-bottom: 0.25rem;
+}
+
+.staff-dept-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  font-size: 0.725rem;
+  color: #475569;
+  background: #f8fafc;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.4rem;
+  border: 1px solid #e2e8f0;
+}
+
+/* Live Auto-preview indicator */
+.auto-preview-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.pulse-indicator {
+  position: relative;
+  display: flex;
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+}
+
+.ping-wave {
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  position: absolute;
+  display: inline-flex;
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: #34d399;
+  opacity: 0.75;
+}
+
+.ping-center {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+  height: 0.5rem;
+  width: 0.5rem;
+  background-color: #059669;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Warning callout */
+.warning-callout {
+  display: flex;
+  gap: 0.55rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.55rem;
+  padding: 0.6rem 0.75rem;
+}
+
+/* Buttons in action panel */
+.btn-primary-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  border: 1px solid #047857;
+  padding: 0.75rem 1rem;
+  border-radius: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.3);
+  transition: all 0.18s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    box-shadow: 0 5px 14px rgba(5, 150, 105, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.btn-secondary-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.helper-notice {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  background: #f8fafc;
+  border-radius: 0.45rem;
+  border: 1px solid #e2e8f0;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.45rem;
+}
+
+/* ── Right Area: PDF Preview Studio (Full Height) ──────────── */
+.export-preview-area {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-panel-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #1e293b;
+  border-radius: 0.85rem;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+/* Toolbar */
+.preview-toolbar {
+  flex-shrink: 0;
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.6rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toolbar-title {
+  color: #f8fafc;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.preview-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolbar-status-generating {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #34d399;
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  background: rgba(6, 95, 70, 0.35);
+  border-radius: 9999px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.45rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+  }
+
+  &.toolbar-btn-highlight {
+    background: #059669;
+    border-color: #047857;
+    color: #ffffff;
+
+    &:hover:not(:disabled) {
+      background: #047857;
+      border-color: #065f46;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* Preview Canvas (Fills entire container height) */
+.preview-stage-canvas {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: #334155;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  @media (min-width: 1024px) {
+    padding: 0.75rem;
+  }
+}
+
+.iframe-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pdf-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+/* Empty / Loading preview card */
+.preview-loading-card,
+.empty-preview-state {
+  max-width: 440px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 0.85rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.loading-doc-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinner */
+.spinner-ring {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #cbd5e1;
+  border-top-color: #059669;
+  border-radius: 9999px;
+  animation: spin 0.75s linear infinite;
+
+  &.spinner-ring-sm {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-width: 2px;
+  }
+
+  &.spinner-ring-lg {
+    width: 2rem;
+    height: 2rem;
+    border-width: 3px;
+  }
+
+  &.spinner-ring-white {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===================================================================
+   ปรับให้อ่านง่ายและใช้งานง่ายขึ้น (ตัวอักษรใหญ่ขึ้น + ขั้นตอนมีเลขนำ)
+   =================================================================== */
+.export-sidebar {
+  width: 420px;
+
+  @media (min-width: 1440px) {
+    width: 460px;
+  }
+}
+
+.page-main-title { font-size: 1.4rem; @media (min-width: 768px) { font-size: 1.6rem; } }
+.btn-back { font-size: 0.95rem; padding: 0.5rem 0.9rem; }
+.status-pill { font-size: 0.9rem; padding: 0.4rem 0.9rem; }
+.btn-settings { font-size: 0.9rem; }
+
+.panel-card { border-color: #cbd5e1; border-radius: 0.75rem; }
+.panel-card-header { padding: 1rem 1.25rem; background: #f0fdf4; border-bottom: 1px solid #bbf7d0; }
+.panel-card-title { font-size: 1.1rem; color: #064e3b; }
+.panel-card-subtitle { font-size: 0.9rem; color: #334155; }
+.panel-card-body { padding: 1.15rem 1.25rem; }
+
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #064e3b;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 9999px;
+  background: #047857;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.control-field-group {
+  margin-bottom: 1rem;
+  padding-bottom: 0.25rem;
+}
+
+.staff-dept-badge { font-size: 0.9rem; color: #1e293b; padding: 0.4rem 0.7rem; }
+.auto-preview-badge { font-size: 0.9rem; padding: 0.6rem 0.8rem; }
+.warning-callout { padding: 0.8rem 0.95rem; p { font-size: 0.9rem !important; } }
+
+.btn-primary-action { font-size: 1.1rem; padding: 0.95rem 1.1rem; border-radius: 0.75rem; }
+.btn-secondary-action { font-size: 1rem; padding: 0.7rem 1rem; border-color: #94a3b8; color: #0f172a; }
+.helper-notice { padding: 0.7rem 0.85rem; p { font-size: 0.9rem !important; color: #334155 !important; } }
+.error-banner { padding: 0.75rem 0.95rem; div { font-size: 0.95rem !important; } }
+
+.toolbar-title { font-size: 0.95rem; }
+.preview-badge { font-size: 0.8rem; }
+.toolbar-btn { font-size: 0.9rem; }

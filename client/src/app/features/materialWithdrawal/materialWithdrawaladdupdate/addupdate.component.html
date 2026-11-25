@@ -1,0 +1,690 @@
+<div class="min-h-screen bg-slate-100 px-4 py-6 sm:px-6 lg:px-8 font-sans">
+  <div class="mx-auto max-w-[1700px] space-y-6">
+
+    <!-- Top Navigation & Page Title -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          (click)="cancel()"
+          class="group inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-base font-medium text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          <span class="text-lg leading-none transition group-hover:-translate-x-0.5">←</span>
+          ย้อนกลับ
+        </button>
+
+        <div class="h-6 w-px bg-slate-300"></div>
+
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">
+              {{ isViewMode() ? 'รายละเอียดใบเบิกวัสดุ' : 'สร้างใบเบิกวัสดุใหม่' }}
+            </h1>
+            <span
+              class="inline-flex items-center rounded-full px-3.5 py-1 text-sm font-bold ring-1"
+              [ngClass]="
+                isViewMode()
+                  ? 'bg-slate-100 text-slate-800 ring-slate-300'
+                  : 'bg-green-50 text-green-800 ring-green-300'
+              "
+            >
+              {{ isViewMode() ? (stockStatus() === 'cancelled' ? 'ยกเลิกแล้ว' : 'รายละเอียดใบเบิก') : 'โหมดเพิ่มข้อมูล' }}
+            </span>
+          </div>
+          <p class="text-sm text-slate-700 mt-0.5">
+            {{ isViewMode() ? 'รายละเอียดการเบิกจ่ายและตัดสต็อกพัสดุตามเอกสารจัดซื้อ' : 'ระบบเบิกจ่ายวัสดุคงคลังและตัดสต็อกตามเอกสารจัดซื้อ' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Summary Pills in Header (Create mode only) -->
+      @if (isViewMode()) {
+        <button type="button" (click)="goToExport()" class="rounded-xl bg-green-800 px-4 py-2 font-semibold text-white hover:bg-green-900">
+          ส่งออกใบเบิกวัสดุ
+        </button>
+      }
+      @if (!isViewMode() && availableItems().length > 0) {
+        <div class="hidden sm:flex items-center gap-2.5">
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-sm shadow-sm text-slate-600">
+            <span>พร้อมเบิก:</span>
+            <span class="ml-1.5 font-bold text-slate-900">{{ inStockCount() }} / {{ availableItems().length }} รายการ</span>
+          </div>
+          <div
+            class="rounded-xl border px-4 py-1.5 text-sm shadow-sm transition"
+            [ngClass]="
+              selectedItemsCount() > 0
+                ? 'border-green-300 bg-green-50 text-green-900'
+                : 'border-slate-200 bg-white text-slate-600'
+            "
+          >
+            <span class="font-medium">เลือกแล้ว:</span>
+            <span class="ml-1.5 font-bold" [ngClass]="selectedItemsCount() > 0 ? 'text-green-800' : 'text-slate-900'">
+              {{ selectedItemsCount() }} รายการ ({{ totalWithdrawalQuantity() | number }} ชิ้น)
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (isLoading()) {
+      <div class="rounded-xl border border-slate-300 bg-white p-12 shadow-sm">
+        <div class="flex flex-col items-center justify-center py-10 text-center">
+          <div class="h-10 w-10 animate-spin rounded-full border-4 border-green-800 border-t-transparent"></div>
+          <p class="mt-4 text-base font-medium text-slate-600">กำลังโหลดข้อมูลเอกสารและรายการวัสดุ...</p>
+        </div>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
+
+        <!-- Card 1: ข้อมูลเอกสารจัดซื้อ & ผู้ขอเบิก (โทนทางการ เรียบหรู สะอาดตา) -->
+        <div class="rounded-xl border border-slate-300 bg-white shadow-sm overflow-hidden">
+          
+          <div class="border-b-2 border-green-950 border-l-[6px] border-l-lime-400 bg-green-800 px-6 py-3.5 text-white">
+            <h2 class="flex items-center gap-3 text-xl font-bold text-white">
+              @if (!isViewMode()) { <span class="flex h-8 w-8 items-center justify-center rounded-md bg-white text-base font-bold text-green-900">1</span> }
+              {{ isViewMode() ? 'ข้อมูลเอกสารและผู้ขอเบิก' : 'ข้อมูลเอกสารจัดซื้อและผู้ขอเบิก' }}
+            </h2>
+            <p class="mt-0.5 text-base text-white">
+              {{ isViewMode() ? 'ข้อมูลอ้างอิงเอกสารจัดซื้อและผู้ขอเบิกวัสดุ' : 'ตรวจสอบข้อมูลเอกสารอ้างอิงและระบุผู้ขอเบิกวัสดุ' }}
+            </p>
+          </div>
+
+          <div class="p-6 space-y-6">
+            <!-- Procurement Reference Tiles -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              <!-- Tile 1: Document No -->
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <span class="text-sm font-medium text-slate-700 block">เลขที่เอกสารจัดซื้อ</span>
+                <span class="mt-1.5 text-base sm:text-lg font-bold text-slate-900 block font-mono">
+                  {{ procurementDocumentNo() || '-' }}
+                </span>
+              </div>
+
+              <!-- Tile 2: Approval No -->
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <span class="text-sm font-medium text-slate-700 block">เลขที่เอกสารขออนุมัติ</span>
+                <span class="mt-1.5 text-base sm:text-lg font-bold text-slate-900 block font-mono">
+                  {{ procurementApprovalNo() || '-' }}
+                </span>
+              </div>
+
+              <!-- Tile 3: Department -->
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <span class="text-sm font-medium text-slate-700 block">หน่วยงาน / ภาควิชา</span>
+                <span class="mt-1.5 text-base sm:text-lg font-bold text-slate-900 block truncate" [title]="procurementDetail()?.department_name || selectedDepartment() || '-'">
+                  {{ procurementDetail()?.department_name || selectedDepartment() || '-' }}
+                </span>
+              </div>
+
+              <!-- Tile 4: Fiscal Year / Project -->
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <span class="text-sm font-medium text-slate-700 block">ปีงบประมาณ / โครงการ</span>
+                <span class="mt-1.5 text-base sm:text-lg font-bold text-slate-900 block truncate">
+                  {{ fiscalYearName() || '-' }}
+                  @if (projectCode()) {
+                    <span class="text-sm font-normal text-slate-600 font-mono">({{ projectCode() }})</span>
+                  }
+                </span>
+                @if (projectYearLoadFailed()) {
+                  <span class="mt-1 block text-sm text-red-600">โหลดข้อมูลปีงบประมาณหรือโครงการไม่สำเร็จ</span>
+                }
+              </div>
+
+            </div>
+
+            <!-- Form fields: ผู้เบิก & หมายเหตุ -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-200">
+              
+              <!-- Requisitioner (ผู้เบิก) -->
+              <div>
+                @if (isViewMode()) {
+                  <div>
+                    <span class="mb-2 block text-base font-semibold text-slate-700">ผู้เบิกพัสดุ</span>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 flex items-center justify-between">
+                      <span class="font-bold text-base">{{ selectedStaffName() || '-' }}</span>
+                      @if (selectedDepartment()) {
+                        <span class="text-sm font-medium text-slate-600">หน่วยงาน: {{ selectedDepartment() }}</span>
+                      }
+                    </div>
+                  </div>
+                } @else {
+                  <div>
+                    <app-select
+                      label="ผู้เบิกพัสดุ"
+                      [control]="form.controls.staff_id"
+                      [options]="staffs()"
+                      optionLabel="full_name"
+                      optionValue="staff_id"
+                      placeholder="-- เลือกผู้เบิกพัสดุ --"
+                      [required]="true"
+                      [searchable]="true"
+                    />
+                    @if (selectedDepartment()) {
+                      <div class="mt-2 text-sm font-medium text-slate-600">
+                        หน่วยงานผู้เบิก: <span class="font-semibold text-slate-800">{{ selectedDepartment() }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Remark (หมายเหตุ) -->
+              <div>
+                @if (isViewMode()) {
+                  <div>
+                    <span class="mb-2 block text-base font-semibold text-slate-700">หมายเหตุการเบิกจ่าย</span>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 text-base min-h-[48px] flex items-center">
+                      {{ form.controls.remark.value || 'ไม่มีหมายเหตุ' }}
+                    </div>
+                  </div>
+                } @else {
+                  <app-textarea
+                    label="หมายเหตุการเบิกจ่าย"
+                    [control]="form.controls.remark"
+                    placeholder="กรอกหมายเหตุ หรือ วัตถุประสงค์ในการเบิก (ถ้ามี)"
+                  />
+                }
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: รายการวัสดุ -->
+        <div class="rounded-xl border border-slate-300 bg-white shadow-sm overflow-hidden">
+          
+          <!-- Section Title & Subtitle -->
+          <div class="border-b border-slate-200 px-6 py-4 bg-slate-50">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h3 class="flex items-center gap-3 text-xl font-bold text-green-950">
+                  @if (!isViewMode()) { <span class="flex h-8 w-8 items-center justify-center rounded-md bg-green-800 text-base font-bold text-white">2</span> }
+                  {{ isViewMode() ? 'รายการวัสดุที่เบิก' : 'รายการวัสดุที่ต้องการเบิก' }}
+                </h3>
+                <p class="text-sm text-slate-700 mt-0.5">
+                  @if (isViewMode()) {
+                    รายการและจำนวนวัสดุที่ถูกบันทึกตัดสต็อกเรียบร้อยแล้ว
+                  } @else {
+                    กรอกเฉพาะรายการที่เบิกจริง รายการที่เว้นว่างจะยังคงอยู่ในสต็อก
+                  }
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                @if (isViewMode()) {
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-3.5 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+                    ทั้งหมด {{ issuedItems().length }} รายการ
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-3.5 py-1 text-sm font-medium text-slate-700 ring-1 ring-slate-200">
+                    ทั้งหมด {{ availableItems().length }} รายการ
+                  </span>
+                  <span
+                    class="inline-flex items-center rounded-full px-3.5 py-1 text-sm font-bold ring-1"
+                    [ngClass]="
+                      selectedItemsCount() > 0
+                        ? 'bg-green-50 text-green-800 ring-green-300'
+                        : 'bg-slate-100 text-slate-600 ring-slate-200'
+                    "
+                  >
+                    เลือกแล้ว {{ selectedItemsCount() }} รายการ
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Control Toolbar (Create mode only) -->
+          @if (!isViewMode()) {
+            <div class="border-b border-slate-200 bg-white px-6 py-3">
+              <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                
+                <!-- Search & Filters -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <!-- Search box -->
+                  <div class="relative min-w-[240px] max-w-sm flex-1 sm:flex-initial">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-600">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      [value]="searchTerm()"
+                      (input)="searchTerm.set($any($event.target).value)"
+                      placeholder="ค้นหาชื่อวัสดุ หรือ รหัส..."
+                      class="w-full rounded-lg border border-slate-400 bg-white py-2.5 pl-9 pr-8 text-base placeholder-slate-600 shadow-sm focus:border-green-800 focus:outline-none focus:ring-1 focus:ring-green-800"
+                    />
+                    @if (searchTerm()) {
+                      <button
+                        type="button"
+                        (click)="searchTerm.set('')"
+                        class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-600 hover:text-slate-600"
+                        title="ล้างคำค้นหา"
+                      >
+                        ✕
+                      </button>
+                    }
+                  </div>
+
+                  <!-- Filter Pills -->
+                  <div class="inline-flex rounded-xl bg-slate-100 p-1 text-sm font-medium">
+                    <button
+                      type="button"
+                      (click)="activeFilter.set('all')"
+                      class="rounded-lg px-3 py-1.5 transition"
+                      [ngClass]="activeFilter() === 'all' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
+                    >
+                      ทั้งหมด ({{ availableItems().length }})
+                    </button>
+                    <button
+                      type="button"
+                      (click)="activeFilter.set('selected')"
+                      class="rounded-lg px-3 py-1.5 transition"
+                      [ngClass]="activeFilter() === 'selected' ? 'bg-white text-green-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'"
+                    >
+                      เลือกแล้ว ({{ selectedItemsCount() }})
+                    </button>
+                    <button
+                      type="button"
+                      (click)="activeFilter.set('in_stock')"
+                      class="rounded-lg px-3 py-1.5 transition"
+                      [ngClass]="activeFilter() === 'in_stock' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
+                    >
+                      มีสต็อก ({{ inStockCount() }})
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Bulk Quick Action Buttons -->
+                <div class="flex items-center gap-2.5 self-end lg:self-auto">
+                  <button
+                    type="button"
+                    (click)="fillAllMax()"
+                    [disabled]="availableItems().length === 0"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-green-800 hover:bg-green-900 text-white px-4 py-2.5 text-base font-bold shadow-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="กรอกจำนวนคงเหลือสูงสุดทุกรายการที่พร้อมเบิก"
+                  >
+                    ⚡ เบิกทั้งหมดทุกรายการ
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="clearAllQuantities()"
+                    [disabled]="selectedItemsCount() === 0"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-400 bg-white hover:bg-slate-100 text-slate-900 px-4 py-2.5 text-base font-bold shadow-sm transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="ล้างจำนวนที่เลือกเบิกทั้งหมดเป็น 0"
+                  >
+                    ล้างค่าทั้งหมด
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          }
+
+          <!-- Items Table (หัวตารางสีเขียวงานราชการ) -->
+          @if (isViewMode()) {
+            <!-- View Mode: Read-Only Table (เหมือนหน้าแก้ไข แต่ดูได้อย่างเดียว ไม่มีปุ่มบันทึก) -->
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[700px] text-left">
+                <thead class="bg-green-800 text-white text-base font-semibold">
+                  <tr>
+                    <th class="py-3.5 px-4 w-16 text-center">ลำดับ</th>
+                    <th class="py-3.5 px-4">วัสดุ</th>
+                    <th class="py-3.5 px-4 text-right">จำนวนที่เบิก</th>
+                    <th class="py-3.5 px-4 text-right">ราคาต่อหน่วย</th>
+                    <th class="py-3.5 px-4 text-right">รวมเงิน</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                  @for (item of issuedItems(); track item.material_item_id; let i = $index) {
+                    <tr class="hover:bg-slate-50 transition">
+                      <td class="py-3.5 px-4 text-center font-medium text-slate-700 text-base">{{ i + 1 }}</td>
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 text-base">{{ item.material_name }}</td>
+                      <td class="py-3.5 px-4 text-right font-bold text-green-800 text-base">
+                        {{ item.quantity | number:'1.0-2' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right text-slate-700 text-base">
+                        {{ item.unit_price | number:'1.2-2' }} ฿
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-bold text-slate-900 text-base">
+                        {{ item.quantity * item.unit_price | number:'1.2-2' }} ฿
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="5" class="py-12 text-center text-slate-700 text-base">ไม่พบรายการวัสดุในใบเบิกนี้</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- View Mode Summary Bar -->
+            @if (issuedItems().length > 0) {
+              <div class="border-t border-slate-200 bg-slate-50 p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  
+                  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <span class="text-sm font-medium text-slate-700 block">รายการที่เบิก</span>
+                    <div class="mt-1.5 text-2xl font-bold text-slate-900">
+                      {{ issuedItems().length }}
+                      <span class="text-sm font-normal text-slate-700">รายการ</span>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <span class="text-sm font-medium text-slate-700 block">จำนวนชิ้นที่เบิกรวม</span>
+                    <div class="mt-1.5 text-2xl font-bold text-green-800">
+                      {{ totalIssuedQuantity() | number }}
+                      <span class="text-sm font-normal text-slate-700">ชิ้น</span>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <span class="text-sm font-medium text-slate-700 block">มูลค่ารวมทั้งสิ้น</span>
+                    <div class="mt-1.5 text-2xl font-bold text-slate-900">
+                      {{ totalIssuedAmount() | number:'1.2-2' }}
+                      <span class="text-sm font-normal text-slate-700">บาท</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            }
+
+          } @else {
+            <!-- Create Mode Table: กรอกจำนวนเบิก พร้อมหัวตารางสีเขียว -->
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[850px] text-left">
+                <thead class="bg-green-800 text-white text-base font-semibold">
+                  <tr>
+                    <th class="py-3.5 px-4 w-16 text-center">ลำดับ</th>
+                    <th class="py-3.5 px-4">วัสดุ</th>
+                    <th class="py-3.5 px-4 text-right w-32">ราคาต่อหน่วย</th>
+                    <th class="py-3.5 px-4 text-right w-24">รับเข้า</th>
+                    <th class="py-3.5 px-4 text-right w-28">คงเหลือ</th>
+                    <th class="py-3.5 px-4 text-center w-80">จำนวนที่ต้องการเบิก</th>
+                    <th class="py-3.5 px-4 text-right w-36">รวมเงิน</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 bg-white">
+                  @for (item of filteredAvailableItems(); track item.receive_detail_id; let i = $index) {
+                    @let qty = getQuantity(item.receive_detail_id);
+                    @let available = item.available_quantity ?? 0;
+                    @let isOver = qty > available;
+                    @let isSelected = qty > 0;
+                    @let isOutOfStock = available <= 0;
+
+                    <tr
+                      class="transition-colors border-b border-slate-100"
+                      [ngClass]="{
+                        'bg-green-50/70': isSelected && !isOver,
+                        'bg-rose-50': isOver,
+                        'hover:bg-slate-50': !isSelected && !isOver && !isOutOfStock,
+                        'opacity-50 bg-slate-50': isOutOfStock
+                      }"
+                    >
+                      <!-- Index -->
+                      <td class="py-3.5 px-4 text-center font-medium text-slate-700 text-base">
+                        {{ i + 1 }}
+                      </td>
+
+                      <!-- Material Name -->
+                      <td class="py-3.5 px-4">
+                        <div class="font-semibold text-slate-900 text-base">
+                          {{ item.material_name || 'วัสดุ #' + item.material_item_id }}
+                        </div>
+                        @if (isSelected && !isOver) {
+                          <span class="inline-block mt-0.5 text-sm font-semibold text-green-700">
+                            ✓ กำลังเบิก {{ qty }} ชิ้น
+                          </span>
+                        } @else if (isOutOfStock) {
+                          <span class="inline-block mt-0.5 text-sm text-slate-700">
+                            (ไม่มีของในสต็อก)
+                          </span>
+                        }
+                      </td>
+
+                      <!-- Unit Price -->
+                      <td class="py-3.5 px-4 text-right text-slate-700 text-base font-medium whitespace-nowrap">
+                        {{ (item.unit_price || 0) | number:'1.2-2' }} ฿
+                      </td>
+
+                      <!-- Received Quantity -->
+                      <td class="py-3.5 px-4 text-right text-slate-600 text-base font-medium font-mono">
+                        {{ item.received_quantity | number }}
+                      </td>
+
+                      <!-- Available Stock -->
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                        <span
+                          class="font-bold text-base"
+                          [ngClass]="available > 0 ? 'text-green-800' : 'text-slate-600'"
+                        >
+                          {{ available | number }}
+                        </span>
+                      </td>
+
+                      <!-- Stepper and Quick Fill -->
+                      <td class="py-3.5 px-4">
+                        @if (isOutOfStock) {
+                          <div class="text-center text-sm text-slate-600 py-1">
+                            คงเหลือ 0
+                          </div>
+                        } @else {
+                          <div class="flex items-center justify-center gap-1.5">
+                            
+                            <!-- Stepper Group -->
+                            <div
+                              class="inline-flex items-center rounded-lg border bg-white shadow-sm overflow-hidden"
+                              [ngClass]="isOver ? 'border-rose-400 ring-1 ring-rose-300' : 'border-slate-300'"
+                            >
+                              <!-- Minus button -->
+                              <button
+                                type="button"
+                                (click)="decrementQuantity(item)"
+                                [disabled]="qty <= 0"
+                                class="flex h-11 w-11 items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-900 text-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                title="ลดลง 1"
+                              >
+                                −
+                              </button>
+
+                              <!-- Numeric Input -->
+                              <input
+                                type="number"
+                                min="0"
+                                [max]="available"
+                                step="1"
+                                [value]="qty === 0 ? '' : qty"
+                                placeholder="0"
+                                (input)="setQuantity(item.receive_detail_id, $event)"
+                                class="h-11 w-24 text-center text-lg font-bold text-slate-900 focus:outline-none font-mono"
+                                [attr.aria-label]="'จำนวนเบิก ' + item.material_name"
+                              />
+
+                              <!-- Plus button -->
+                              <button
+                                type="button"
+                                (click)="incrementQuantity(item)"
+                                [disabled]="qty >= available"
+                                class="flex h-11 w-11 items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-900 text-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                title="เพิ่มขึ้น 1"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <!-- Quick Max button -->
+                            <button
+                              type="button"
+                              (click)="setMaxQuantity(item)"
+                              class="rounded-lg border px-3.5 py-2.5 text-base font-bold shadow-sm transition active:scale-95 whitespace-nowrap"
+                              [ngClass]="
+                                qty === available
+                                  ? 'border-green-800 bg-green-800 text-white'
+                                  : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+                              "
+                              title="เบิกเต็มจำนวนคงเหลือ"
+                            >
+                              {{ qty === available ? 'เต็มสต็อก' : 'สูงสุด' }}
+                            </button>
+
+                            <!-- Quick Clear button -->
+                            @if (qty > 0) {
+                              <button
+                                type="button"
+                                (click)="clearQuantity(item)"
+                                class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-700 transition"
+                                title="ล้างจำนวนเป็น 0"
+                              >
+                                ✕
+                              </button>
+                            }
+                          </div>
+
+                          @if (isOver) {
+                            <div class="mt-1 text-center text-sm font-semibold text-rose-600">
+                              เกินสต็อกคงเหลือ (สูงสุด {{ available }})
+                            </div>
+                          }
+                        }
+                      </td>
+
+                      <!-- Line Subtotal -->
+                      <td class="py-3.5 px-4 text-right font-bold text-base whitespace-nowrap"
+                        [ngClass]="qty > 0 ? 'text-green-900' : 'text-slate-600'"
+                      >
+                        {{ (qty * (item.unit_price || 0)) | number:'1.2-2' }} ฿
+                      </td>
+
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="7" class="py-10 text-center text-slate-700 text-base">
+                        @if (searchTerm()) {
+                          ไม่พบวัสดุตรงกับคำค้นหา "{{ searchTerm() }}"
+                        } @else {
+                          ไม่มีรายการวัสดุคงเหลือในเอกสารนี้
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Create Mode Summary Widget -->
+            <div class="border-t border-slate-200 bg-slate-50 p-5">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
+                <!-- Card 1 -->
+                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span class="text-sm font-medium text-slate-700 block">รายการที่เลือกเบิก</span>
+                  <div class="mt-1.5 text-2xl font-bold text-slate-900">
+                    {{ selectedItemsCount() }}
+                    <span class="text-sm font-normal text-slate-700">/ {{ availableItems().length }} รายการ</span>
+                  </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span class="text-sm font-medium text-slate-700 block">จำนวนชิ้นที่เบิกรวม</span>
+                  <div class="mt-1.5 text-2xl font-bold text-green-900">
+                    {{ totalWithdrawalQuantity() | number }}
+                    <span class="text-sm font-normal text-slate-700">ชิ้น</span>
+                  </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span class="text-sm font-medium text-slate-700 block">มูลค่ารวมโดยประมาณ</span>
+                  <div class="mt-1.5 text-2xl font-bold text-slate-900">
+                    {{ totalWithdrawalAmount() | number:'1.2-2' }}
+                    <span class="text-sm font-normal text-slate-700">บาท</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Tip Bar -->
+              @if (selectedItemsCount() === 0) {
+                <div class="mt-4 rounded-lg border border-amber-400 border-l-4 border-l-amber-500 bg-amber-50 px-4 py-3 text-base font-semibold text-amber-950">
+                  ⚠️ ยังไม่ได้ระบุจำนวนวัสดุที่ต้องการเบิก กรุณาระบุจำนวนในรายการ หรือคลิกปุ่ม "เบิกทั้งหมดทุกรายการ"
+                </div>
+              } @else if (hasOverLimitItems()) {
+                <div class="mt-4 rounded-lg border border-rose-400 border-l-4 border-l-rose-600 bg-rose-50 px-4 py-3 text-base font-semibold text-rose-950">
+                  ⚠️ มีรายการที่ระบุจำนวนเกินยอดคงเหลือในคลัง กรุณาปรับลดจำนวนให้ไม่เกินยอดคงเหลือ
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+
+        <!-- Sticky Bottom Actions Bar -->
+        <div class="sticky bottom-4 z-20 rounded-xl border border-slate-300 bg-white px-6 py-4 shadow-md">
+          <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4">
+            
+            <div class="text-sm text-slate-700">
+              @if (isViewMode()) {
+                <span>ตรวจสอบรายละเอียดใบเบิกวัสดุเรียบร้อยแล้วสามารถกดย้อนกลับ</span>
+              } @else {
+                <span>ระบุผู้เบิกและเลือกรายการวัสดุที่ต้องการเพื่อเปิดใช้งานปุ่มบันทึก</span>
+              }
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+              @if (isViewMode()) {
+                <button
+                  type="button"
+                  (click)="cancel()"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-900 px-6 py-2.5 text-base font-semibold text-white shadow-sm transition active:scale-95"
+                >
+                  <span>←</span>
+                  ย้อนกลับไปหน้ารายการ
+                </button>
+                <button
+                  type="button"
+                  (click)="openAdjustment()"
+                  class="inline-flex items-center justify-center rounded-xl bg-green-800 px-6 py-2.5 text-base font-semibold text-white hover:bg-green-900"
+                >{{ stockStatus() === 'cancelled' ? 'ดูประวัติการยกเลิก' : 'ปรับปรุง / ยกเลิกใบเบิก' }}</button>
+              } @else {
+                <button
+                  type="button"
+                  (click)="cancel()"
+                  [disabled]="isSubmitting()"
+                  class="inline-flex justify-center rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-2.5 text-base font-medium text-slate-700 shadow-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ยกเลิก
+                </button>
+
+                <button
+                  type="submit"
+                  [disabled]="
+                    isSubmitting() ||
+                    form.invalid ||
+                    selectedItemsCount() === 0 ||
+                    hasOverLimitItems()
+                  "
+                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-800 hover:bg-green-900 px-6 py-2.5 text-base font-semibold text-white shadow-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  @if (isSubmitting()) {
+                    กำลังบันทึก...
+                  } @else {
+                    บันทึกใบเบิกวัสดุ @if (selectedItemsCount() > 0) { ({{ selectedItemsCount() }} รายการ) }
+                  }
+                </button>
+              }
+            </div>
+
+          </div>
+        </div>
+
+      </form>
+    }
+  </div>
+</div>

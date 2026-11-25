@@ -1,0 +1,567 @@
+<div class="min-h-screen bg-slate-50 px-3 py-3 font-sans sm:px-6 sm:py-4">
+  <div class="mx-auto max-w-[1920px]">
+
+    <!-- Signature Header (matches the system design in other modules) -->
+    <div class="relative mb-4 overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:mb-6 sm:rounded-2xl sm:px-6 sm:py-5">
+      <!-- Signature top 3-color stripe (amber-500 / blue-800 / amber-500) -->
+      <div class="absolute inset-x-0 top-0 flex h-1.5">
+        <div class="w-1/3 bg-amber-500"></div>
+        <div class="w-1/3 bg-blue-800"></div>
+        <div class="w-1/3 bg-amber-500"></div>
+      </div>
+
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-600 sm:text-xs">
+            ระบบบริหารจัดการงานพัสดุ
+          </p>
+          <h1 class="flex items-center gap-2 text-lg font-bold tracking-tight text-blue-900 sm:text-2xl">
+            <mat-icon class="!h-7 !w-7 !text-2xl text-blue-900">settings</mat-icon>
+            <span>ตั้งค่าระบบ (Settings)</span>
+          </h1>
+          <p class="mt-0.5 text-xs leading-relaxed text-slate-500 sm:text-sm">
+            จัดการข้อมูลระบบหลัก การแสดงผล และแบบฟอร์มเอกสารใบเบิกพัสดุ
+          </p>
+        </div>
+
+        <!-- User Role Badge -->
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs font-semibold text-blue-900 shadow-sm">
+            <mat-icon class="!h-4 !w-4 !text-base text-blue-800">
+              {{ accountService.isAdmin() ? 'admin_panel_settings' : 'badge' }}
+            </mat-icon>
+            <span>สิทธิ์การใช้งาน: <strong>{{ accountService.isAdmin() ? 'ผู้ดูแลระบบ (Admin)' : 'เจ้าหน้าที่ (Staff)' }}</strong></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Grid Layout (responsive up to 1920px) -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+
+      <!-- Left Category Navigation Sidebar -->
+      <aside class="lg:col-span-4 xl:col-span-3 2xl:col-span-2">
+        <div class="sticky top-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="mb-3 px-3 pt-1">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">หมวดหมู่การตั้งค่า</h2>
+          </div>
+
+          <!-- Nav Category Buttons -->
+          <nav class="space-y-2">
+            <!-- 1. General Settings Button -->
+            <button
+              type="button"
+              (click)="setTab('general')"
+              [class]="
+                activeTab === 'general'
+                  ? 'flex w-full items-center gap-3.5 rounded-xl border border-blue-800 bg-blue-900 p-3.5 text-left text-white shadow-sm transition'
+                  : 'flex w-full items-center gap-3.5 rounded-xl border border-transparent p-3.5 text-left text-slate-700 transition hover:bg-slate-100 hover:text-blue-900'
+              "
+            >
+              <div
+                [class]="
+                  activeTab === 'general'
+                    ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white'
+                    : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500'
+                "
+              >
+                <mat-icon class="!h-5 !w-5 !text-xl">tune</mat-icon>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold">ตั้งค่าทั่วไป</span>
+                  @if (activeTab === 'general') {
+                    <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                  }
+                </div>
+                <p
+                  [class]="
+                    activeTab === 'general'
+                      ? 'mt-0.5 truncate text-xs text-blue-100'
+                      : 'mt-0.5 truncate text-xs text-slate-500'
+                  "
+                >
+                  ระบบหลัก & การแสดงผล
+                </p>
+              </div>
+            </button>
+
+            <!-- 2. Requisition Settings Button -->
+            <button
+              type="button"
+              (click)="setTab('withdrawal')"
+              [class]="
+                activeTab === 'withdrawal'
+                  ? 'flex w-full items-center gap-3.5 rounded-xl border border-blue-800 bg-blue-900 p-3.5 text-left text-white shadow-sm transition'
+                  : 'flex w-full items-center gap-3.5 rounded-xl border border-transparent p-3.5 text-left text-slate-700 transition hover:bg-slate-100 hover:text-blue-900'
+              "
+            >
+              <div
+                [class]="
+                  activeTab === 'withdrawal'
+                    ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white'
+                    : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500'
+                "
+              >
+                <mat-icon class="!h-5 !w-5 !text-xl">receipt_long</mat-icon>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold">ตั้งค่าใบเบิก</span>
+                  @if (activeTab === 'withdrawal') {
+                    <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                  }
+                </div>
+                <p
+                  [class]="
+                    activeTab === 'withdrawal'
+                      ? 'mt-0.5 truncate text-xs text-blue-100'
+                      : 'mt-0.5 truncate text-xs text-slate-500'
+                  "
+                >
+                  แบบฟอร์มใบเบิกวัสดุ
+                </p>
+              </div>
+            </button>
+          </nav>
+
+          <!-- Current User Info Box -->
+          <div class="mt-6 border-t border-slate-100 pt-4">
+            <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+              <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 font-bold text-blue-900">
+                <mat-icon class="!h-5 !w-5 !text-lg">person</mat-icon>
+              </div>
+              <div class="min-w-0 flex-1 text-xs">
+                <div class="font-semibold text-slate-800 truncate">
+                  {{ accountService.currentUser()?.firstName || 'ผู้ใช้งาน' }} {{ accountService.currentUser()?.lastName || '' }}
+                </div>
+                <div class="truncate text-slate-500">
+                  {{ accountService.currentUser()?.email || 'เข้าสู่ระบบแล้ว' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Main Content Panel -->
+      <main class="lg:col-span-8 xl:col-span-9 2xl:col-span-10 space-y-6">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: ตั้งค่าทั่วไป (General Settings)     -->
+        <!-- ========================================== -->
+        @if (activeTab === 'general') {
+          <div class="space-y-6 animate-fadeIn">
+
+            <!-- Card 1: ข้อมูลและสัญลักษณ์ระบบ (System Branding) - Admin Only -->
+            @if (accountService.isAdmin()) {
+              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <!-- Card Header -->
+                <div class="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-900 text-white shadow-sm">
+                        <mat-icon class="!h-5 !w-5 !text-xl">domain</mat-icon>
+                      </div>
+                      <div>
+                        <h2 class="text-base font-bold text-blue-900">ข้อมูลและสัญลักษณ์ระบบ (System Branding)</h2>
+                        <p class="text-xs text-slate-500">กำหนดชื่อระบบงานและโลโก้หลัก (มีผลต่อผู้ใช้งานทุกคนในระบบ)</p>
+                      </div>
+                    </div>
+                    <span class="inline-flex w-fit items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                      <mat-icon class="!h-3.5 !w-3.5 !text-sm">security</mat-icon>
+                      เฉพาะ Admin
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="space-y-6 p-6">
+                  <!-- Project Name -->
+                  <div>
+                    <label for="projectName" class="mb-1.5 block text-sm font-semibold text-slate-800">
+                      ชื่อระบบงาน / ชื่อโครงการ
+                    </label>
+                    <div class="relative">
+                      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <mat-icon class="!h-5 !w-5 !text-xl text-blue-900">edit_note</mat-icon>
+                      </div>
+                      <input
+                        type="text"
+                        id="projectName"
+                        [(ngModel)]="projectNameInput"
+                        placeholder="เช่น ระบบบริหารพัสดุและครุภัณฑ์"
+                        class="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                    <p class="mt-1.5 text-xs text-slate-500">
+                      ชื่อนี้จะปรากฏที่แถบเมนูด้านซ้ายและส่วนหัวของระบบ
+                    </p>
+                  </div>
+
+                  <!-- Central Department -->
+                  <div>
+                    <label for="centralDepartment" class="mb-1.5 block text-sm font-semibold text-slate-800">
+                      ส่วนกลางพัสดุ
+                    </label>
+                    <select
+                      id="centralDepartment"
+                      [(ngModel)]="centralDepartmentInput"
+                      class="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 transition focus:border-blue-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option [ngValue]="null">— ยังไม่ได้เลือก —</option>
+                      @for (department of departmentOptions; track department.department_id) {
+                        <option [ngValue]="department.department_id">{{ department.department_name }}</option>
+                      }
+                    </select>
+                    <p class="mt-1.5 text-xs text-slate-500">
+                      แผนกที่ใช้เป็นคลังกลางรับพัสดุเข้าจากเอกสารจัดซื้อ ต้องเลือกก่อนบันทึกการรับพัสดุ
+                    </p>
+                  </div>
+
+                  <!-- System Logo -->
+                  <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-slate-800">
+                      ตราสัญลักษณ์ / โลโก้โครงการ (LOGO)
+                    </label>
+
+                    <div class="mt-3 flex flex-col gap-6 sm:flex-row sm:items-center">
+                      <!-- Current / Preview Logo Box -->
+                      <div class="flex flex-col items-center gap-2">
+                        <div class="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-200 bg-slate-50 p-2.5 shadow-inner">
+                          <img
+                            [src]="previewUrl || settingsService.getLogoUrl()"
+                            alt="System Logo Preview"
+                            class="h-full w-full object-contain"
+                          />
+                          @if (previewUrl) {
+                            <span class="absolute top-1 right-1 rounded-md bg-blue-900 px-1.5 py-0.5 text-[9px] font-bold text-white shadow">
+                              ภาพใหม่
+                            </span>
+                          }
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-400">ภาพแสดงตัวอย่าง</span>
+                      </div>
+
+                      <!-- Upload Dropzone Area -->
+                      <div class="flex-1">
+                        <div class="relative flex min-h-[112px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 px-6 py-4 text-center transition hover:border-blue-800 hover:bg-blue-50/30">
+                          <input
+                            type="file"
+                            (change)="onFileSelected($event)"
+                            accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                            class="absolute inset-0 cursor-pointer opacity-0"
+                            title="คลิกเพื่อเลือกไฟล์รูปภาพ"
+                          />
+                          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-blue-900 shadow-sm border border-slate-200">
+                            <mat-icon class="!h-5 !w-5 !text-xl">cloud_upload</mat-icon>
+                          </div>
+                          <span class="mt-2 text-xs font-semibold text-slate-700">
+                            คลิกหรือลากไฟล์ภาพมาวางที่นี่
+                          </span>
+                          <span class="mt-0.5 text-[11px] text-slate-400">
+                            รองรับไฟล์ PNG, JPG, JPEG, SVG (ขนาดไม่เกิน 2MB)
+                          </span>
+                        </div>
+
+                        <!-- Selected File Info Chip -->
+                        @if (selectedFile) {
+                          <div class="mt-2.5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-medium text-blue-900">
+                            <div class="flex items-center gap-1.5 truncate">
+                              <mat-icon class="!h-4 !w-4 !text-base text-blue-800">check_circle</mat-icon>
+                              <span class="truncate">เลือกไฟล์: {{ selectedFile.name }}</span>
+                              <span class="text-[11px] text-blue-700">({{ (selectedFile.size / 1024).toFixed(1) }} KB)</span>
+                            </div>
+                            <button
+                              type="button"
+                              (click)="clearSelectedFile()"
+                              class="ml-2 rounded-lg p-1 text-blue-800 transition hover:bg-blue-100"
+                              title="ยกเลิกไฟล์นี้"
+                            >
+                              <mat-icon class="!h-4 !w-4 !text-base">close</mat-icon>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Form Action Buttons -->
+                  <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-5 border-t border-slate-100">
+                    <button
+                      type="button"
+                      (click)="resetSettings()"
+                      [disabled]="isSaving"
+                      class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+                    >
+                      <mat-icon class="!h-4 !w-4 !text-base">restart_alt</mat-icon>
+                      <span>คืนค่าเริ่มต้นระบบ</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="saveSettings()"
+                      [disabled]="isSaving"
+                      class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-900 px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    >
+                      <mat-icon class="!h-4 !w-4 !text-base">{{ isSaving ? 'sync' : 'save' }}</mat-icon>
+                      <span>{{ isSaving ? 'กำลังบันทึกข้อมูล...' : 'บันทึกการตั้งค่าระบบ' }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Card 2: การแสดงผลและส่วนบุคคล (Personal Display Preferences) -->
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <!-- Card Header -->
+              <div class="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-900 text-white shadow-sm">
+                    <mat-icon class="!h-5 !w-5 !text-xl">view_sidebar</mat-icon>
+                  </div>
+                  <div>
+                    <h2 class="text-base font-bold text-blue-900">การแสดงผลส่วนบุคคล (Personal Preferences)</h2>
+                    <p class="text-xs text-slate-500">การตั้งค่านี้จะมีผลเฉพาะบนเบราว์เซอร์เครื่องที่คุณกำลังใช้งาน</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Body -->
+              <div class="p-6">
+                <!-- Toggle Navbar Switch -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-start gap-3.5 pr-4">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-blue-900">
+                      <mat-icon class="!h-5 !w-5 !text-lg">side_navigation</mat-icon>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-semibold text-slate-800">
+                        แสดงแถบเมนูนำทาง (Sidebar / Navbar)
+                      </h3>
+                      <p class="mt-0.5 text-xs text-slate-500">
+                        เปิดหรือซ่อนแถบเมนูนำทางด้านซ้ายเพื่อเพิ่มพื้นที่ในการดูข้อมูลและเอกสาร
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    (click)="toggleNavbar()"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-800 focus:ring-offset-2"
+                    [ngClass]="settingsService.navbarVisible() ? 'bg-blue-900' : 'bg-slate-200'"
+                    aria-label="สลับการแสดงแถบเมนูนำทาง"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      [ngClass]="settingsService.navbarVisible() ? 'translate-x-5' : 'translate-x-0'"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        }
+
+        <!-- ========================================== -->
+        <!-- TAB 2: ตั้งค่าใบเบิก (Requisition Settings) -->
+        <!-- ========================================== -->
+        @if (activeTab === 'withdrawal') {
+          <div class="space-y-6 animate-fadeIn">
+
+            <!-- Card A: แบบฟอร์มการตั้งค่าใบเบิกวัสดุ -->
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <!-- Card Header -->
+              <div class="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-900 text-white shadow-sm">
+                      <mat-icon class="!h-5 !w-5 !text-xl">description</mat-icon>
+                    </div>
+                    <div>
+                      <h2 class="text-base font-bold text-blue-900">ตั้งค่าแบบฟอร์มใบเบิกวัสดุ (Material Requisition Form)</h2>
+                      <p class="text-xs text-slate-500">กำหนดข้อมูลหัวเอกสาร เจ้าหน้าที่พัสดุ และข้อความเงื่อนไขท้ายใบเบิก</p>
+                    </div>
+                  </div>
+                  <span class="inline-flex w-fit items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-900">
+                    <mat-icon class="!h-3.5 !w-3.5 !text-sm text-blue-800">picture_as_pdf</mat-icon>
+                    ส่งออก PDF (QuestPDF)
+                  </span>
+                </div>
+              </div>
+
+              <!-- Notice Box -->
+              <div class="mx-6 mt-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900">
+                <div class="flex gap-2.5">
+                  <mat-icon class="!h-5 !w-5 !text-lg shrink-0 text-amber-700">info</mat-icon>
+                  <div>
+                    <span class="font-bold">ข้อมูลการตั้งค่านี้บันทึกในฐานข้อมูลและใช้ร่วมกันทุกเครื่อง</span>
+                    <p class="mt-0.5 text-amber-800">
+                      ระบบจะนำสังกัด เจ้าหน้าที่พัสดุ และข้อความเงื่อนไขท้ายใบนี้ไปประกอบในไฟล์ PDF ใบเบิกวัสดุให้อัตโนมัติเมื่อกดสั่งพิมพ์หรือดาวน์โหลด
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Form Body -->
+              <div class="space-y-6 p-6">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <label class="block text-sm font-semibold text-slate-800">บัญชีเล่มที่
+                    <input type="number" min="1" step="1" [(ngModel)]="materialExportSettings.bookNumber" class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal" />
+                  </label>
+                  <label class="block text-sm font-semibold text-slate-800">เลขที่ถัดไป
+                    <input type="number" min="1" step="1" [(ngModel)]="materialExportSettings.nextNumber" class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal" />
+                  </label>
+                </div>
+                <p class="text-xs text-slate-500">เลขที่ออกให้เอกสารแล้วจะเก็บกับเอกสารจัดซื้อเดิมและไม่เปลี่ยนตามการตั้งค่านี้</p>
+                <!-- Row 1: Department Name & Supplies Officer (2 cols on md+) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- 1. Department Name -->
+                  <div>
+                    <label for="departmentName" class="mb-1.5 flex items-center justify-between text-sm font-semibold text-slate-800">
+                      <span>สังกัดหน่วยงาน / ฝ่าย / สำนัก <span class="text-rose-500">*</span></span>
+                      <span class="text-xs font-normal text-slate-400">ส่วนหัวเอกสาร</span>
+                    </label>
+                    <div class="relative">
+                      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <mat-icon class="!h-5 !w-5 !text-xl text-blue-900">corporate_fare</mat-icon>
+                      </div>
+                      <input
+                        type="text"
+                        id="departmentName"
+                        [(ngModel)]="materialExportSettings.departmentName"
+                        placeholder="เช่น สาขาวิชาคณิตศาสตร์และสถิติ คณะวิทยาศาสตร์และเทคโนโลยี"
+                        class="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                    @if (!materialExportSettings.departmentName.trim()) {
+                      <p class="mt-1.5 flex items-center gap-1 text-xs text-rose-500">
+                        <mat-icon class="!h-3.5 !w-3.5 !text-sm">warning</mat-icon>
+                        จำเป็นต้องระบุชื่อสังกัดหน่วยงานสำหรับสร้างเอกสารใบเบิก
+                      </p>
+                    } @else {
+                      <p class="mt-1.5 text-xs text-slate-500">
+                        จะแสดงในส่วนหัวของเอกสารใบเบิกวัสดุ
+                      </p>
+                    }
+                  </div>
+
+                  <!-- 2. Supplies Officer -->
+                  <div>
+                    <label for="suppliesOfficer" class="mb-1.5 flex items-center justify-between text-sm font-semibold text-slate-800">
+                      <span>ชื่อเจ้าหน้าที่พัสดุผู้รับผิดชอบ <span class="text-rose-500">*</span></span>
+                      <span class="text-xs font-normal text-slate-400">ช่องลงนามผู้จ่าย</span>
+                    </label>
+                    <div class="relative">
+                      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <mat-icon class="!h-5 !w-5 !text-xl text-blue-900">badge</mat-icon>
+                      </div>
+                      <input
+                        type="text"
+                        id="suppliesOfficer"
+                        [(ngModel)]="materialExportSettings.suppliesOfficer"
+                        placeholder="เช่น นางสาวเสาวณีย์ หกประเสริฐ"
+                        class="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                    @if (!materialExportSettings.suppliesOfficer.trim()) {
+                      <p class="mt-1.5 flex items-center gap-1 text-xs text-rose-500">
+                        <mat-icon class="!h-3.5 !w-3.5 !text-sm">warning</mat-icon>
+                        จำเป็นต้องระบุชื่อเจ้าหน้าที่พัสดุสำหรับช่องลงนาม
+                      </p>
+                    } @else {
+                      <p class="mt-1.5 text-xs text-slate-500">
+                        จะพิมพ์เป็นชื่อใต้ลายมือชื่อในช่อง "เจ้าหน้าที่พัสดุ" ท้ายใบเบิก
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- 3. Responsibility Statement -->
+                <div>
+                  <div class="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <label for="responsibilityText" class="text-sm font-semibold text-slate-800">
+                      ข้อความรับผิดชอบและระเบียบท้ายใบเบิก <span class="text-rose-500">*</span>
+                    </label>
+
+                    <!-- Tag Status Badge & Insert Button -->
+                    <div class="flex items-center gap-2">
+                      @if (hasDateTag) {
+                        <span class="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-900">
+                          <mat-icon class="!h-3.5 !w-3.5 !text-sm text-blue-800">check_circle</mat-icon>
+                          มีแท็ก &#123;date&#125; แล้ว
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800">
+                          <mat-icon class="!h-3.5 !w-3.5 !text-sm">warning</mat-icon>
+                          ยังขาดแท็ก &#123;date&#125;
+                        </span>
+                      }
+
+                      <button
+                        type="button"
+                        (click)="insertDateTag()"
+                        class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-blue-800 hover:bg-blue-50 hover:text-blue-900"
+                        title="คลิกเพื่อแทรกแท็ก {date} ในข้อความ"
+                      >
+                        <mat-icon class="!h-3.5 !w-3.5 !text-sm text-blue-900">add</mat-icon>
+                        <span>แทรกแท็ก &#123;date&#125;</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <textarea
+                    id="responsibilityText"
+                    rows="5"
+                    [(ngModel)]="materialExportSettings.responsibilityText"
+                    class="block w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 leading-relaxed"
+                    placeholder="ระบุข้อความรับผิดชอบท้ายใบเบิก..."
+                  ></textarea>
+
+                  <div class="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500">
+                    <span>ใช้รหัสสัญลักษณ์ <strong>&#123;date&#125;</strong> ในตำแหน่งที่ต้องการให้ระบบใส่วันที่ของใบเบิกอัตโนมัติ</span>
+                    <span class="text-right text-slate-400">{{ materialExportSettings.responsibilityText.length }} ตัวอักษร</span>
+                  </div>
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-5 border-t border-slate-100">
+                  <a
+                    routerLink="/admin/materialWithdrawal"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-900 transition hover:text-blue-700 hover:underline"
+                  >
+                    <mat-icon class="!h-4 !w-4 !text-base">arrow_forward</mat-icon>
+                    <span>ไปยังหน้ารายการเบิกวัสดุ</span>
+                  </a>
+
+                  <div class="flex items-center gap-2 justify-end">
+                    <button
+                      type="button"
+                      (click)="resetMaterialExportSettings()"
+                      class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      <mat-icon class="!h-4 !w-4 !text-base">restart_alt</mat-icon>
+                      <span>คืนค่าเริ่มต้นใบเบิก</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="saveMaterialExportSettings()"
+                      class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-900 px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    >
+                      <mat-icon class="!h-4 !w-4 !text-base">save</mat-icon>
+                      <span>บันทึกการตั้งค่าใบเบิกวัสดุ</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        }
+
+      </main>
+    </div>
+  </div>
+</div>

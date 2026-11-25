@@ -1,0 +1,363 @@
+<div
+  class="public-portal min-h-screen bg-slate-100 font-sans text-slate-900"
+  style="font-family: 'Sarabun', sans-serif"
+>
+  <!-- Identity bar -->
+  <div class="bg-blue-950 text-white print:hidden">
+    <div class="mx-auto flex max-w-[1760px] flex-wrap items-center justify-between gap-3 px-4 py-2 text-sm sm:px-6 lg:px-8">
+      <a
+        [routerLink]="['/portal/staffs', staffId, 'dashboard']"
+        [queryParams]="backQueryParams"
+        [state]="{ staff }"
+        class="inline-flex items-center gap-1 font-semibold text-white hover:text-amber-200"
+      >
+        <i class="material-icons text-base">arrow_back</i>
+        กลับครุภัณฑ์ในครอบครอง
+      </a>
+      <span class="hidden text-slate-200 sm:inline">ระบบสารสนเทศงานพัสดุและครุภัณฑ์</span>
+    </div>
+  </div>
+
+  <!-- Asset header -->
+  <header class="border-b-4 border-amber-400 bg-white shadow-sm">
+    <div class="mx-auto max-w-[1760px] px-4 py-5 sm:px-6 lg:px-8">
+      <p class="text-sm font-bold text-amber-800">ทะเบียนข้อมูลครุภัณฑ์</p>
+      <h1 class="mt-0.5 break-words text-2xl font-bold text-blue-950 xl:text-3xl">
+        {{ detail()?.asset_name || asset?.asset_name || 'รายการครุภัณฑ์' }}
+      </h1>
+      <dl class="mt-3 grid gap-x-8 gap-y-1 text-base sm:grid-cols-2">
+        <div class="flex gap-2">
+          <dt class="shrink-0 text-slate-700">ผู้ครอบครอง:</dt>
+          <dd class="font-bold text-slate-900">{{ staff?.full_name || 'บุคลากร #' + staffId }}</dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="shrink-0 text-slate-700">สังกัด:</dt>
+          <dd class="font-bold text-slate-900">{{ staff?.department_name || '-' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-[1760px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center rounded-md border border-slate-300 bg-white py-20 text-slate-700 shadow-sm">
+        <div class="mb-3 h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-blue-900"></div>
+        <p class="text-base font-bold text-slate-900">กำลังโหลดรายละเอียดครุภัณฑ์...</p>
+      </div>
+    } @else if (detail(); as d) {
+      <!-- Asset information -->
+      <section class="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
+        <div class="border-b-2 border-amber-400 bg-blue-900 px-6 py-4 text-white">
+          <h2 class="text-lg font-bold">ข้อมูลครุภัณฑ์</h2>
+        </div>
+        <div class="grid gap-4 p-4 sm:p-6 md:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+            <p class="text-sm font-bold text-slate-700">เลขครุภัณฑ์</p>
+            <p class="mt-1 text-lg font-bold text-blue-950">{{ getMasterAssetCode() }}</p>
+          </div>
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+            <p class="text-sm font-bold text-slate-700">โครงการ</p>
+            <p class="mt-1 text-lg font-bold text-slate-900">{{ d.project_code || '-' }}</p>
+            <p class="text-sm text-slate-700">{{ d.project_name || '' }}</p>
+          </div>
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+            <p class="text-sm font-bold text-slate-700">วันที่รับครุภัณฑ์</p>
+            <p class="mt-1 text-lg font-bold text-slate-900">{{ toThaiDate(d.receive_date, 'short') }}</p>
+          </div>
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+            <p class="text-sm font-bold text-slate-700">วันที่เบิก</p>
+            <p class="mt-1 text-lg font-bold text-slate-900">{{ toThaiDate(d.withdrawal_date, 'short') }}</p>
+          </div>
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+            <p class="text-sm font-bold text-slate-700">สถานที่จัดเก็บ</p>
+            <p class="mt-1 text-lg font-bold text-slate-900">{{ d.storage_location || '-' }}</p>
+          </div>
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3 md:col-span-2">
+            <p class="text-sm font-bold text-slate-700">วัตถุประสงค์การใช้งาน</p>
+            <p class="mt-1 text-base font-bold text-slate-900">{{ d.purpose || '-' }}</p>
+          </div>
+          <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+            <p class="text-sm font-bold text-slate-700">สิ้นสุดการครอบครอง</p>
+            <p class="mt-1 text-lg font-bold text-slate-900">
+              {{ d.end_date ? toThaiDate(d.end_date, 'short') : 'ยังครอบครองอยู่' }}
+            </p>
+            @if (d.end_reason) {
+              <p class="text-sm text-slate-700">{{ d.end_reason }}</p>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs + tables -->
+      <section class="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
+        <div class="border-b border-slate-300 bg-slate-100 px-4 pt-3">
+          <div class="flex flex-wrap gap-1" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              (click)="selectTab('sub_items')"
+              class="rounded-t-md border border-b-0 px-5 py-2.5 text-base font-bold transition cursor-pointer"
+              [class.bg-white]="activeTab() === 'sub_items'"
+              [class.text-blue-950]="activeTab() === 'sub_items'"
+              [class.border-slate-300]="activeTab() === 'sub_items'"
+              [class.border-t-4]="activeTab() === 'sub_items'"
+              [class.border-t-amber-400]="activeTab() === 'sub_items'"
+              [class.bg-blue-900]="activeTab() !== 'sub_items'"
+              [class.text-white]="activeTab() !== 'sub_items'"
+              [class.border-blue-900]="activeTab() !== 'sub_items'"
+            >
+              รายการครุภัณฑ์ย่อย ({{ d.sub_items.length }})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              (click)="selectTab('repairs')"
+              class="rounded-t-md border border-b-0 px-5 py-2.5 text-base font-bold transition cursor-pointer"
+              [class.bg-white]="activeTab() === 'repairs'"
+              [class.text-blue-950]="activeTab() === 'repairs'"
+              [class.border-slate-300]="activeTab() === 'repairs'"
+              [class.border-t-4]="activeTab() === 'repairs'"
+              [class.border-t-amber-400]="activeTab() === 'repairs'"
+              [class.bg-blue-900]="activeTab() !== 'repairs'"
+              [class.text-white]="activeTab() !== 'repairs'"
+              [class.border-blue-900]="activeTab() !== 'repairs'"
+            >
+              ประวัติการซ่อมบำรุง ({{ d.repairs.length }})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              (click)="selectTab('histories')"
+              class="rounded-t-md border border-b-0 px-5 py-2.5 text-base font-bold transition cursor-pointer"
+              [class.bg-white]="activeTab() === 'histories'"
+              [class.text-blue-950]="activeTab() === 'histories'"
+              [class.border-slate-300]="activeTab() === 'histories'"
+              [class.border-t-4]="activeTab() === 'histories'"
+              [class.border-t-amber-400]="activeTab() === 'histories'"
+              [class.bg-blue-900]="activeTab() !== 'histories'"
+              [class.text-white]="activeTab() !== 'histories'"
+              [class.border-blue-900]="activeTab() !== 'histories'"
+            >
+              ประวัติการใช้งาน ({{ d.histories.length }})
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 1: SUB-ITEMS (same columns as the admin sub-item register) -->
+        @if (activeTab() === 'sub_items') {
+          @if (d.sub_items.length === 0) {
+            <div class="py-16 text-center text-base font-bold text-slate-800">ไม่พบรายการครุภัณฑ์ย่อยในระบบ</div>
+          } @else {
+            <div class="overflow-x-auto p-4 sm:p-6">
+              <table class="w-full min-w-[1250px] border-separate border-spacing-0 overflow-hidden rounded-md border border-slate-300 text-left text-base">
+                <thead>
+                  <tr class="bg-blue-900 text-white">
+                    <th class="px-6 py-4 font-bold">รหัสเริ่มต้น</th>
+                    <th class="px-6 py-4 font-bold">รหัสสิ้นสุด</th>
+                    <th class="px-6 py-4 font-bold">ชื่อครุภัณฑ์ย่อย</th>
+                    <th class="px-6 py-4 font-bold">หมวดหมู่</th>
+                    <th class="px-6 py-4 text-right font-bold">ราคา</th>
+                    <th class="px-6 py-4 text-right font-bold">จำนวน</th>
+                    <th class="px-6 py-4 text-right font-bold">ราคารวม</th>
+                    <th class="px-6 py-4 text-center font-bold">สถานะ</th>
+                    <th class="px-6 py-4 text-center font-bold">การจำหน่าย</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (subItem of d.sub_items; track subItem.asset_sub_item_id; let odd = $odd) {
+                    <tr class="transition hover:bg-blue-100/70" [class.bg-slate-50]="odd">
+                      <td class="whitespace-nowrap border-t border-slate-200 px-6 py-5 font-bold text-blue-950">{{ subItem.asset_code_start || '-' }}</td>
+                      <td class="whitespace-nowrap border-t border-slate-200 px-6 py-5 font-bold text-blue-950">{{ subItem.asset_code_end || '-' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 font-bold text-slate-900">{{ subItem.sub_item_name }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-slate-800">{{ subItem.category_name || '-' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ subItem.unit_price ?? 0 | number: '1.2-2' }}</td>
+                      <td class="whitespace-nowrap border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ subItem.quantity ?? 0 | number: '1.0-2' }} {{ subItem.unit_name || '' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right font-bold tabular-nums text-blue-950">{{ subItem.total_price ?? 0 | number: '1.2-2' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-center">
+                        <span
+                          class="inline-block rounded-full border px-3 py-0.5 text-sm font-bold"
+                          [class.border-red-300]="subItem.status === 'จำหน่ายแล้ว'"
+                          [class.bg-red-50]="subItem.status === 'จำหน่ายแล้ว'"
+                          [class.text-red-900]="subItem.status === 'จำหน่ายแล้ว'"
+                          [class.border-emerald-300]="subItem.status !== 'จำหน่ายแล้ว'"
+                          [class.bg-emerald-50]="subItem.status !== 'จำหน่ายแล้ว'"
+                          [class.text-emerald-900]="subItem.status !== 'จำหน่ายแล้ว'"
+                        >
+                          {{ subItem.status || 'ปกติ' }}
+                        </span>
+                      </td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-center">
+                        @if (subItem.status === 'จำหน่ายแล้ว') {
+                          <button
+                            type="button"
+                            (click)="openSubItemDisposal(subItem)"
+                            class="rounded-full bg-blue-900 px-4 py-1.5 text-sm font-bold text-white shadow-sm hover:bg-blue-950 cursor-pointer"
+                          >
+                            ดูเอกสารจำหน่าย
+                          </button>
+                        } @else {
+                          <span class="text-slate-500">-</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+
+        <!-- TAB 2: REPAIRS -->
+        @if (activeTab() === 'repairs') {
+          @if (d.repairs.length === 0) {
+            <div class="py-16 text-center text-base font-bold text-slate-800">ไม่พบประวัติการซ่อมบำรุงในระบบ</div>
+          } @else {
+            <div class="overflow-x-auto p-4 sm:p-6">
+              <table class="w-full min-w-[900px] border-separate border-spacing-0 overflow-hidden rounded-md border border-slate-300 text-left text-base">
+                <thead>
+                  <tr class="bg-blue-900 text-white">
+                    <th class="w-28 whitespace-nowrap px-4 py-4 text-center font-bold">ลำดับ</th>
+                    <th class="px-6 py-4 font-bold">วันที่ซ่อม</th>
+                    <th class="px-6 py-4 font-bold">เอกสารซ่อม</th>
+                    <th class="px-6 py-4 font-bold">อาการเสีย / การซ่อม</th>
+                    <th class="px-6 py-4 font-bold">ร้านค้า / ผู้รับจ้าง</th>
+                    <th class="px-6 py-4 text-right font-bold">ค่าใช้จ่าย (บาท)</th>
+                    <th class="px-6 py-4 text-center font-bold">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (repair of d.repairs; track repair.asset_repair_id; let i = $index; let odd = $odd) {
+                    <tr class="transition hover:bg-blue-100/70" [class.bg-slate-50]="odd">
+                      <td class="border-t border-slate-200 px-4 py-5 text-center text-slate-700">{{ i + 1 }}</td>
+                      <td class="whitespace-nowrap border-t border-slate-200 px-6 py-5">{{ toThaiDate(repair.repair_date, 'short') }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 font-bold text-blue-950">{{ repair.repair_document_no || '-' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-slate-800">{{ repair.problem_description || repair.repair_description || '-' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-slate-800">{{ repair.repair_shop_name || '-' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right font-bold tabular-nums text-blue-950">{{ repair.repair_cost ?? 0 | number: '1.2-2' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-center">
+                        <span class="inline-block rounded-full border border-emerald-300 bg-emerald-50 px-3 py-0.5 text-sm font-bold text-emerald-900">
+                          {{ repair.status || 'ดำเนินการเรียบร้อย' }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+
+        <!-- TAB 3: USAGE HISTORIES -->
+        @if (activeTab() === 'histories') {
+          @if (d.histories.length === 0) {
+            <div class="py-16 text-center text-base font-bold text-slate-800">ไม่พบประวัติการใช้งานครุภัณฑ์</div>
+          } @else {
+            <div class="overflow-x-auto p-4 sm:p-6">
+              <table class="w-full min-w-[760px] border-separate border-spacing-0 overflow-hidden rounded-md border border-slate-300 text-left text-base">
+                <thead>
+                  <tr class="bg-blue-900 text-white">
+                    <th class="w-28 whitespace-nowrap px-4 py-4 text-center font-bold">ลำดับ</th>
+                    <th class="px-6 py-4 font-bold">วันที่</th>
+                    <th class="px-6 py-4 font-bold">ประเภท</th>
+                    <th class="px-6 py-4 font-bold">รายละเอียด</th>
+                    <th class="px-6 py-4 font-bold">ผู้ใช้งาน</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (history of d.histories; track history.sub_item_history_id; let i = $index; let odd = $odd) {
+                    <tr class="transition hover:bg-blue-100/70" [class.bg-slate-50]="odd">
+                      <td class="border-t border-slate-200 px-4 py-5 text-center text-slate-700">{{ i + 1 }}</td>
+                      <td class="whitespace-nowrap border-t border-slate-200 px-6 py-5">{{ toThaiDate(history.history_date, 'short') }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5">
+                        <span class="inline-block rounded-full border border-blue-200 bg-blue-50 px-3 py-0.5 text-sm font-bold text-blue-900">
+                          {{ history.usage_type_name || history.history_type || '-' }}
+                        </span>
+                      </td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-slate-800">{{ history.detail || '-' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-slate-800">{{ history.full_name || '-' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+      </section>
+    }
+  </main>
+
+  <footer class="mt-2 border-t border-slate-300 bg-white py-4 text-center text-sm text-slate-700">
+    ระบบสืบค้นข้อมูลพัสดุและครุภัณฑ์ • ข้อมูลเพื่อการตรวจสอบภายในหน่วยงาน
+  </footer>
+</div>
+
+@if (disposalSub(); as sub) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" (click)="closeSubItemDisposal()">
+    <section
+      role="dialog"
+      aria-modal="true"
+      class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-md bg-white shadow-2xl"
+      style="font-family: 'Sarabun', sans-serif"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-4 bg-blue-900 px-5 py-4 text-white">
+        <div>
+          <h2 class="text-lg font-bold">เอกสารการจำหน่าย</h2>
+          <p class="mt-0.5 text-sm text-slate-100">{{ sub.name }}</p>
+        </div>
+        <button type="button" (click)="closeSubItemDisposal()" aria-label="ปิด" class="rounded-md px-3 py-1 text-xl hover:bg-blue-800 cursor-pointer">×</button>
+      </div>
+
+      <div class="space-y-4 overflow-auto p-5">
+        @if (loadingDisposal()) {
+          <p class="py-8 text-center text-base font-bold text-slate-800">กำลังโหลดข้อมูล...</p>
+        } @else {
+          @for (doc of disposalDocs(); track doc.disposal_document_id) {
+            <div class="rounded-md border border-slate-300 bg-slate-50 p-4">
+              <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-base">
+                <dt class="text-slate-700">วันที่จำหน่าย</dt>
+                <dd class="font-bold text-slate-900">{{ toThaiDate(doc.disposal_date, 'full') }}</dd>
+                <dt class="text-slate-700">ขอบเขต</dt>
+                <dd class="font-bold text-slate-900">{{ doc.asset_sub_item_id ? 'ครุภัณฑ์ย่อยชิ้นนี้' : 'จำหน่ายทั้งชุด' }}</dd>
+              </dl>
+              <button
+                type="button"
+                (click)="openDisposalFile(doc)"
+                class="mt-3 rounded-full bg-blue-900 px-5 py-1.5 text-sm font-bold text-white hover:bg-blue-950 cursor-pointer"
+              >
+                เปิดเอกสาร
+              </button>
+            </div>
+          }
+
+          @if (disposalLegacy(); as old) {
+            <div class="rounded-md border border-slate-300 bg-slate-50 p-4">
+              <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-base">
+                <dt class="text-slate-700">วันที่จำหน่าย</dt>
+                <dd class="font-bold text-slate-900">{{ toThaiDate(old.disposal_date, 'full') }}</dd>
+                <dt class="text-slate-700">วิธีจำหน่าย</dt>
+                <dd class="font-bold text-slate-900">{{ old.disposal_method || '-' }}</dd>
+                @if (old.disposal_reason) {
+                  <dt class="text-slate-700">เหตุผล</dt>
+                  <dd class="font-bold text-slate-900">{{ old.disposal_reason }}</dd>
+                }
+              </dl>
+              <p class="mt-2 text-sm text-slate-700">รายการจำหน่ายจากระบบเดิม ยังไม่มีไฟล์เอกสาร</p>
+            </div>
+          }
+
+          @if (disposalDocs().length === 0 && !disposalLegacy() && !disposalError()) {
+            <p class="py-8 text-center text-base text-slate-800">ไม่พบเอกสารการจำหน่ายของรายการนี้</p>
+          }
+          @if (disposalError()) {
+            <p role="alert" class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-base font-bold text-red-800">{{ disposalError() }}</p>
+          }
+        }
+      </div>
+
+      <div class="flex justify-end border-t border-slate-300 bg-slate-50 px-5 py-3">
+        <button type="button" (click)="closeSubItemDisposal()" class="rounded-md bg-blue-900 px-6 py-2 text-base font-bold text-white hover:bg-blue-950 cursor-pointer">ปิด</button>
+      </div>
+    </section>
+  </div>
+}

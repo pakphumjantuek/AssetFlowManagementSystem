@@ -1,0 +1,47 @@
+.material-department-page {
+  color: #1f2937;
+
+  button,
+  select,
+  input {
+    &:focus-visible {
+      outline: 3px solid #047857;
+      outline-offset: 2px;
+    }
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+
+    th,
+    td {
+      vertical-align: middle;
+    }
+
+    thead th {
+      border-bottom: 2px solid #022c22;
+
+      &:not(:last-child) {
+        border-right: 1px solid rgba(4, 120, 87, 0.6);
+      }
+    }
+
+    tbody td:not(:last-child) {
+      border-right: 1px solid #e2e8f0;
+    }
+
+    tfoot td:not(:last-child) {
+      border-right: 1px solid #a7f3d0;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #e2e8f0;
+    }
+  }
+
+  @media (max-width: 767px) {
+    table {
+      font-size: 0.875rem;
+    }
+  }
+}

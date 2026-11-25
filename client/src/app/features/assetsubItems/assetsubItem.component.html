@@ -1,0 +1,54 @@
+@if (missingRunningNumbers().length > 0) {
+  <div class="mx-3 mt-4 overflow-hidden rounded-xl border border-orange-400 border-l-[6px] border-l-orange-600 bg-orange-50 text-orange-950 shadow-sm sm:mx-6" role="alert">
+    <div class="flex items-start gap-3 px-5 py-4">
+      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-600 text-lg font-bold text-white">!</span>
+      <div class="min-w-0 flex-1">
+        <p class="text-lg font-bold">กรุณาตั้งเลขรันครุภัณฑ์ย่อย</p>
+        <p class="mt-1 text-base text-orange-950">
+          พบ <span class="font-extrabold">{{ missingRunningNumbers().length }}</span> รายการในหน้านี้ที่ยังไม่ได้ตั้งเลขรันเริ่มต้นหรือเลขรันสิ้นสุด กดชื่อรายการด้านล่างเพื่อแก้ไข จะได้แสดงรหัสครุภัณฑ์ครบถ้วน
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          @for (item of missingRunningNumbers(); track item.asset_sub_item_id) {
+            <button type="button" (click)="goToEdit(item)" class="rounded-lg border border-orange-500 bg-white px-3.5 py-2 text-base font-bold text-orange-950 shadow-sm transition hover:bg-orange-100">
+              ตั้งเลขรัน: {{ item.sub_item_name }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<app-data-table
+  title="ทะเบียนครุภัณฑ์ย่อย"
+  subtitle="จัดการรายการครุภัณฑ์ย่อยของครุภัณฑ์หลักนี้"
+  [data]="assetsubItems()"
+  [columns]="columns"
+  [idKey]="'asset_sub_item_id'"
+  [isAdmin]="true"
+  [sortOptions]="sortOptions"
+  [totalItems]="assetsubItem?.count ?? 0"
+  [pageSize]="Params.pageSize"
+  [currentPage]="Params.pageNumber"
+  (search)="onSearch($event)"
+  (sortChange)="onSort($event)"
+  (pageChange)="onPageChange($event)"
+  (add)="goToCreate()"
+  (edit)="goToEdit($event)"
+  (delete)="deleteAssetSubItems($event)"
+  (back)="cancel()"
+  [showBack]="true"
+  [showDispose]="true"
+  (action)="handleAction($event)"
+  [badgeColors]="badgeColors"
+  [butttonColor]="butttonColor"
+  [headerColor]="headerColor"
+  [headerBorderColor]="headerBorderColor"
+>
+</app-data-table>
+
+@if (disposalTarget(); as target) {
+  <app-asset-disposal-dialog [assetId]="asset_id()!" [subId]="target.id" [name]="target.name"
+    [readonly]="target.readonly" (closed)="disposalTarget.set(null)"
+    (saved)="disposalTarget.set(null); LoadgetAssetSubItems(asset_id()!)" />
+}

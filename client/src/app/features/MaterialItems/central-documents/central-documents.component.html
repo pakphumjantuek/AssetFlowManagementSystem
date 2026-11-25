@@ -1,0 +1,56 @@
+<main class="min-h-screen bg-[#f4f7f5] px-4 py-6 sm:px-6 lg:px-8 2xl:px-10">
+  <div class="mx-auto w-full max-w-[1680px] space-y-5 2xl:space-y-6">
+    <section class="rounded-xl border border-emerald-200 border-l-[5px] border-l-emerald-700 bg-white p-5 shadow-sm sm:p-7 2xl:p-8">
+      <a [routerLink]="backUrl()" [queryParams]="fiscalYearId() ? { fiscal_year_id: fiscalYearId() } : {}" class="text-sm font-semibold text-emerald-800 hover:underline">← กลับไปสต็อกส่วนกลาง</a>
+      <h1 class="mt-4 text-base font-bold text-emerald-800 2xl:text-lg">ยอดคงเหลือรายเอกสาร</h1>
+      @if (item(); as material) {
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <h2 class="w-full break-words text-xl font-extrabold leading-snug text-slate-950 sm:text-2xl 2xl:text-3xl">{{ material.material_name }}</h2>
+          @if (material.material_code) {
+            <span class="rounded-md bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">รหัส {{ material.material_code }}</span>
+          }
+          @if (material.unit_name) {
+            <span class="rounded-md bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800">หน่วยนับ {{ material.unit_name }}</span>
+          }
+        </div>
+      }
+    </section>
+
+    @if (loading()) {
+      <div class="rounded-xl bg-white p-8 text-center text-slate-600" role="status">กำลังโหลดรายการเอกสาร</div>
+    } @else if (error()) {
+      <div class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-800" role="alert">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่</div>
+    } @else if (item(); as material) {
+      @if (unassignedQuantity() !== 0) {
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+          มีรายการจ่าย {{ unassignedQuantity() | number: '1.0-2' }} ที่ระบุรายการรับต้นทางไม่ได้ ยอดด้านล่างยังต้องตรวจสอบ
+        </div>
+      }
+      <section class="grid gap-3 sm:grid-cols-3 2xl:gap-5">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm 2xl:p-7"><p class="text-sm text-slate-500">รับเข้ารวม</p><p class="mt-1 text-2xl font-bold text-slate-900 2xl:text-3xl">{{ material.quantity_in | number: '1.0-2' }}</p></div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm 2xl:p-7"><p class="text-sm text-slate-500">เบิกแล้ว</p><p class="mt-1 text-2xl font-bold text-rose-700 2xl:text-3xl">{{ material.quantity_out | number: '1.0-2' }}</p></div>
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm 2xl:p-7"><p class="text-sm text-emerald-800">คงเหลือ</p><p class="mt-1 text-2xl font-bold text-emerald-900 2xl:text-3xl">{{ material.current_balance | number: '1.0-2' }}</p></div>
+      </section>
+      <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-end sm:justify-between 2xl:px-8 2xl:py-6">
+          <div><h2 class="font-bold text-emerald-950 2xl:text-lg">ยอดวัสดุตามเอกสาร</h2><p class="mt-1 text-sm text-slate-500">แสดง {{ filteredRows().length }} จาก {{ material.rows.length }} รายการ · ยอดสรุปด้านบนเป็นยอดรวมทุกเอกสาร</p></div>
+          <div class="w-full sm:w-80 2xl:w-96"><label for="document-search" class="mb-1.5 block text-sm font-semibold text-slate-700">ค้นหาเลขเอกสาร</label><input id="document-search" type="search" [value]="documentSearch()" (input)="onDocumentSearch($event)" placeholder="พิมพ์เลขเอกสาร" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-800 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15" /></div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[800px] table-fixed text-sm 2xl:text-base">
+            <thead class="bg-emerald-800 text-white"><tr><th scope="col" class="w-[32%] px-5 py-3 text-left 2xl:px-8 2xl:py-4">เลขเอกสาร</th><th scope="col" class="w-[17%] px-4 py-3 text-right 2xl:py-4">รับเข้า</th><th scope="col" class="w-[17%] px-4 py-3 text-right 2xl:py-4">เบิกแล้ว</th><th scope="col" class="w-[17%] px-5 py-3 text-right 2xl:px-8 2xl:py-4">คงเหลือ</th><th scope="col" class="w-[17%] px-5 py-3 text-center 2xl:px-8 2xl:py-4">เอกสารต้นทาง</th></tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (row of filteredRows(); track row.receive_detail_id) {
+                <tr class="hover:bg-emerald-50"><td class="break-words px-5 py-4 font-semibold text-slate-800 2xl:px-8 2xl:py-5">{{ row.document_no || '-' }}</td><td class="px-4 py-4 text-right tabular-nums">{{ row.quantity | number: '1.0-2' }}</td><td class="px-4 py-4 text-right tabular-nums text-rose-700">{{ row.quantity_out | number: '1.0-2' }}</td><td class="px-5 py-4 text-right font-bold tabular-nums text-emerald-800 2xl:px-8">{{ row.current_balance | number: '1.0-2' }}</td><td class="px-5 py-4 text-center 2xl:px-8"><a [routerLink]="['/admin/materialReceiveDetails', row.procurement_record_id]" class="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50 2xl:text-sm" [attr.aria-label]="'ดูรายการวัสดุในเอกสาร ' + row.document_no">ดูรายการวัสดุ</a></td></tr>
+              } @empty {
+                <tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">ไม่พบเลขเอกสารที่ค้นหา</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    } @else {
+      <div class="rounded-xl bg-white p-8 text-center text-slate-600">ไม่พบรายการวัสดุในปีงบประมาณที่เลือก</div>
+    }
+  </div>
+</main>

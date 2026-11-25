@@ -1,0 +1,305 @@
+<div class="min-h-screen bg-slate-100 px-4 py-6 sm:px-6 lg:px-8 font-sans">
+  <div class="mx-auto max-w-[1920px]">
+    <!-- Back button -->
+    <button
+      type="button"
+      (click)="cancel()"
+      class="mb-4 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-bold text-slate-800 shadow-sm transition hover:border-green-700 hover:bg-green-50 hover:text-green-900"
+    >
+      <span class="text-lg leading-none">←</span>
+      กลับไปหน้ารายการ
+    </button>
+
+    <!-- Header -->
+    <div class="mb-5 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+      <div class="border-b-2 border-green-950 border-l-[6px] border-l-lime-400 bg-green-800 px-6 py-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold tracking-wide text-white">
+              ระบบบริหารจัดการงานพัสดุ
+            </p>
+            <h1 class="mt-1 text-2xl font-bold text-white">
+              {{ title() }}
+            </h1>
+            <p class="mt-1 text-base text-white">กรอกข้อมูลรายละเอียดการรับวัสดุเข้าสู่สต็อก</p>
+          </div>
+
+          <span
+            class="inline-flex w-fit items-center rounded-full px-3.5 py-1 text-sm font-bold"
+            [ngClass]="
+              isEditMode()
+                ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-400'
+                : 'bg-white text-green-900 ring-1 ring-green-300'
+            "
+          >
+            {{ isEditMode() ? 'โหมดแก้ไข' : 'โหมดเพิ่มข้อมูล' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="rounded-xl border border-slate-300 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-green-200 bg-green-50 px-6 py-3">
+        <h2 class="text-lg font-bold text-green-950">ข้อมูล{{ name }}</h2>
+      </div>
+
+      @if (isLoading()) {
+        <div class="space-y-4 p-6">
+          <div class="h-4 w-40 animate-pulse rounded bg-slate-200"></div>
+          <div class="h-11 w-full animate-pulse rounded-lg bg-slate-200"></div>
+          <div class="h-11 w-full animate-pulse rounded-lg bg-slate-200"></div>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <!-- 1. ข้อมูลการรับเข้า -->
+          <section class="border-b border-slate-200">
+            <div class="flex items-center gap-3 border-b border-green-200 bg-green-50 px-6 py-2.5">
+              <span class="flex h-7 w-7 items-center justify-center rounded-md bg-green-800 text-sm font-bold text-white">1</span>
+              <h3 class="text-base font-bold text-green-950">ข้อมูลการรับเข้า</h3>
+            </div>
+            <div class="grid gap-6 p-6 md:grid-cols-2">
+              <app-select
+                label="รายการวัสดุ"
+                  [control]="form.controls.material_item_id"
+                  [options]="selectableMaterials()"
+                  optionLabel="display_name"
+                  optionValue="material_item_id"
+                  placeholder="-- เลือกรายการวัสดุ --"
+                  [required]="true"
+                  [searchable]="true"
+                  [readonly]="isEditMode()"
+              />
+
+              <app-input
+                label="จำนวนรับเข้า"
+                type="number"
+                [control]="form.controls.quantity"
+                placeholder="0"
+                [required]="true"
+              />
+
+              <app-input
+                label="ราคาต่อหน่วย (ดึงจากรายการวัสดุ)"
+                type="number"
+                [control]="form.controls.unit_price"
+                placeholder="0.00"
+                [required]="true"
+                [readonly]="true"
+              />
+
+              <app-input
+                label="รวมเงิน (คำนวณอัตโนมัติ)"
+                type="number"
+                [control]="form.controls.total_amount"
+                placeholder="0.00"
+                [readonly]="true"
+              />
+            </div>
+          </section>
+
+          <!-- 2. การปรับจำนวนรับเข้า (เฉพาะโหมดแก้ไข) -->
+          @if (isEditMode()) {
+            <section>
+              <div class="flex items-center gap-3 border-b border-green-200 bg-green-50 px-6 py-2.5">
+                <span class="flex h-7 w-7 items-center justify-center rounded-md bg-green-800 text-sm font-bold text-white">2</span>
+                <h3 class="text-base font-bold text-green-950">การปรับจำนวนรับเข้า</h3>
+              </div>
+              <div class="grid gap-6 p-6">
+                <div class="rounded-lg border border-amber-400 border-l-4 border-l-amber-500 bg-amber-50 px-4 py-3 text-base text-amber-950">
+                  @if (issueSummaryLoaded()) {
+                    เบิกจากรายการนี้แล้ว <span class="font-extrabold">{{ issuedQuantity() | number:'1.0-2' }}</span> หน่วย
+                  } @else {
+                    กำลังโหลดหรือไม่สามารถอ่านยอดเบิกได้
+                  }
+                  @if (issueSummaryLoaded() && hasUnassignedOutgoing()) {
+                    <span class="block">มีรายการเบิกเก่าที่ไม่ผูกกับรายการรับเข้า จึงยังลดจำนวนรับเข้าไม่ได้</span>
+                  }
+                </div>
+                <app-textarea
+                  label="เหตุผลการปรับจำนวนรับเข้า"
+                  [control]="form.controls.adjustment_reason"
+                  placeholder="ระบุเหตุผลเมื่อเปลี่ยนจำนวนรับเข้า"
+                />
+              </div>
+            </section>
+          }
+
+          <!-- Footer -->
+          <div
+            class="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-end"
+          >
+            <button
+              type="button"
+              (click)="cancel()"
+              class="inline-flex justify-center rounded-lg border border-slate-400 bg-white px-5 py-2.5 text-base font-bold text-slate-800 shadow-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 transition"
+              [disabled]="isSubmitting()"
+            >
+              ยกเลิก
+            </button>
+
+            <button
+              type="submit"
+              class="inline-flex justify-center rounded-lg border border-green-950 bg-green-800 px-6 py-2.5 text-base font-bold text-white shadow-sm hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-50 transition"
+              [disabled]="isSubmitting() || form.invalid"
+            >
+              @if (isSubmitting()) {
+                กำลังบันทึก...
+              } @else if (isEditMode()) {
+                บันทึกการแก้ไข
+              } @else {
+                บันทึกข้อมูล
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+
+    <!-- History Card (แยกส่วนอยู่ใต้การ์ดฟอร์มและปุ่มบันทึก) -->
+    @if (isEditMode()) {
+      <div class="mt-6 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+        <!-- Section Header -->
+        <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50/80 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 shadow-sm ring-1 ring-emerald-200">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">
+                ประวัติการปรับจำนวน
+              </h3>
+              <p class="text-sm text-slate-700">
+                บันทึกรายการปรับยอดรับเข้าและเหตุผลประกอบ
+              </p>
+            </div>
+          </div>
+
+          @if (adjustmentHistory().length > 0) {
+            <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-300">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+              {{ adjustmentHistory().length }} รายการ
+            </span>
+          }
+        </div>
+
+        <!-- History Content -->
+        <div class="p-6">
+          @if (adjustmentHistory().length > 0) {
+            <div class="space-y-3.5">
+              @for (entry of adjustmentHistory(); track entry.adjustment_id; let i = $index) {
+                @let diff = getQuantityDiff(entry.old_quantity, entry.new_quantity);
+                <div class="group relative rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+                  <!-- Top row: Status/Difference Badge & Thai Date -->
+                  <div class="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                      @if (diff > 0) {
+                        <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-sm font-bold text-emerald-700 ring-1 ring-emerald-200">
+                          <svg class="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                          </svg>
+                          ปรับเพิ่ม +{{ diff | number:'1.0-2' }}
+                        </span>
+                      } @else if (diff < 0) {
+                        <span class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1 text-sm font-bold text-rose-700 ring-1 ring-rose-200">
+                          <svg class="h-3.5 w-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25" />
+                          </svg>
+                          ปรับลด {{ diff | number:'1.0-2' }}
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+                          คงเดิม
+                        </span>
+                      }
+
+                      <span class="text-sm text-slate-700 font-mono">#{{ entry.adjustment_id }}</span>
+                    </div>
+
+                    <!-- Thai Date & Time -->
+                    <div class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                      <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.253 3.75m-18 0h18M3.75 7.5v11.25A2.25 2.25 0 006 21h12a2.25 2.25 0 002.25-2.25V7.5M3.75 7.5h18" />
+                      </svg>
+                      <span>{{ entry.created_at | thaiDate: true }} น.</span>
+                    </div>
+                  </div>
+
+                  <!-- Middle row: Transition Comparison & Reason -->
+                  <div class="mt-3.5 grid gap-3.5 sm:grid-cols-12 sm:items-center">
+                    <!-- Before & After Quantity -->
+                    <div class="sm:col-span-5 rounded-lg border border-slate-100 bg-slate-50/80 p-3">
+                      <div class="text-sm font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+                        การเปลี่ยนแปลงจำนวน
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <div class="flex flex-col">
+                          <span class="text-sm text-slate-700">ยอดเดิม</span>
+                          <span class="text-base font-bold text-slate-600 line-through decoration-slate-400">
+                            {{ entry.old_quantity | number:'1.0-2' }}
+                          </span>
+                        </div>
+
+                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200">
+                          <svg class="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                          </svg>
+                        </div>
+
+                        <div class="flex flex-col">
+                          <span class="text-sm font-medium text-emerald-800">ยอดใหม่</span>
+                          <span class="text-lg font-extrabold text-emerald-900">
+                            {{ entry.new_quantity | number:'1.0-2' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Reason -->
+                    <div class="sm:col-span-7 flex flex-col justify-center rounded-lg border border-amber-100 bg-amber-50/40 p-3">
+                      <div class="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-amber-700 mb-1">
+                        <svg class="h-3.5 w-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                        </svg>
+                        เหตุผลการปรับปรุง
+                      </div>
+                      <p class="text-sm font-medium text-slate-800 break-words whitespace-pre-line leading-relaxed">
+                        {{ entry.reason || 'ไม่ได้ระบุเหตุผล' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Footer row: Actor / Operator -->
+                  <div class="mt-3 flex items-center justify-between text-sm text-slate-700 pt-2 border-t border-slate-100/80">
+                    <div class="flex items-center gap-1.5">
+                      <svg class="h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                      </svg>
+                      <span>ผู้ดำเนินการ:</span>
+                      <span class="font-medium text-slate-700">{{ entry.actor_id || 'ไม่ระบุผู้ใช้' }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- Empty state for edit mode -->
+            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center">
+              <div class="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p class="text-sm font-semibold text-slate-700">ยังไม่มีประวัติการปรับจำนวน</p>
+              <p class="mt-1 text-sm text-slate-600">
+                เมื่อมีการแก้ไขจำนวนรับเข้าและระบุเหตุผล ระบบจะบันทึกประวัติการเปลี่ยนแปลงไว้ที่นี่
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

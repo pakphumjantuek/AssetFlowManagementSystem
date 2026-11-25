@@ -1,0 +1,295 @@
+<div class="export-page-container">
+  <!-- Top Navigation & Header Bar -->
+  <header class="export-header-bar">
+    <div class="header-inner-content">
+      <div class="header-left-group">
+        <button
+          type="button"
+          (click)="back()"
+          class="btn-back"
+          title="ย้อนกลับ"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>กลับ</span>
+        </button>
+
+        <div class="header-title-wrapper">
+          <h1 class="page-main-title">{{ isAsset ? 'ส่งออกใบเบิกครุภัณฑ์' : 'ส่งออกใบเบิกพัสดุ' }}</h1>
+        </div>
+      </div>
+
+      <div class="header-right-group">
+        @if (procurement()?.export_book_number && procurement()?.export_serial_number) {
+          <div class="status-pill status-pill-issued">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span>ออกเลขแล้ว: <strong>เล่ม {{ procurement()?.export_book_number }} / เลขที่ {{ procurement()?.export_serial_number }}</strong></span>
+          </div>
+        } @else {
+          <div class="status-pill status-pill-draft">
+            <span class="pill-dot animate-pulse"></span>
+            <span>สถานะ: ยังไม่ออกเลขที่ (ฉบับร่าง)</span>
+          </div>
+        }
+
+        <a
+          routerLink="/admin/settings"
+          class="btn-settings"
+          title="ตั้งค่าสังกัดและเจ้าหน้าที่พัสดุ"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>ตั้งค่าใบเบิก</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout (Single Page - No Scroll) -->
+  <main class="export-main-content">
+    <div class="export-layout-grid">
+      <!-- Left Sidebar: Controls & Actions -->
+      <aside class="export-sidebar">
+        <!-- Configuration Card -->
+        <div class="panel-card config-card">
+          <div class="panel-card-header">
+            <div class="icon-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="panel-card-title">กำหนดข้อมูลใบเบิก</h2>
+              <p class="panel-card-subtitle">{{ isAsset ? "เลือกวันที่ และผู้รับของจากรายการเบิกครุภัณฑ์ที่บันทึกไว้" : "เลือกวันที่และผู้รับของในระบบ" }}</p>
+            </div>
+          </div>
+
+          <div class="panel-card-body space-y-3.5">
+            @if (loading()) {
+              <div class="loading-state-box">
+                <div class="spinner-ring"></div>
+                <span class="text-base font-medium text-slate-700">กำลังโหลดข้อมูล...</span>
+              </div>
+            } @else {
+              <!-- Date Picker from shared -->
+              <div class="control-field-group">
+                <p class="step-row"><span class="step-badge">1</span>เลือกวันที่ในใบเบิก</p>
+                <app-date-picker
+                  label="วันที่ในใบเบิก"
+                  [control]="exportDateControl"
+                  placeholder="เลือกวันที่ในใบเบิก"
+                  [showCalendarIcon]="true"
+                />
+              </div>
+
+              <!-- Staff Selector from shared -->
+              <div class="control-field-group">
+                <p class="step-row"><span class="step-badge">2</span>เลือกผู้รับของ</p>
+                <app-select
+                  label="ข้าพเจ้า / ผู้รับของ"
+                  [control]="staffControl"
+                  [options]="staffs()"
+                  optionLabel="full_name"
+                  optionValue="staff_id"
+                  [placeholder]="isAsset ? '-- เลือกผู้เบิกครุภัณฑ์ --' : '-- ค้นหาหรือเลือกบุคลากร --'"
+                  [required]="true"
+                  [searchable]="true"
+                />
+                @if (selectedStaff?.department_name) {
+                  <div class="staff-dept-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span>สังกัด: <strong>{{ selectedStaff?.department_name }}</strong></span>
+                  </div>
+                }
+              </div>
+
+              <!-- Live Auto-Preview Indicator -->
+              <div class="auto-preview-badge">
+                <span class="pulse-indicator">
+                  <span class="ping-wave"></span>
+                  <span class="ping-center"></span>
+                </span>
+                <span>แสดงตัวอย่าง PDF อัตโนมัติทันทีที่เลือกข้อมูล</span>
+              </div>
+
+              @if (!settings.departmentName) {
+                <div class="warning-callout">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p class="font-bold text-amber-900 text-sm">ยังไม่ระบุหน่วยงาน</p>
+                    <p class="text-sm text-amber-800 mt-0.5">
+                      กรุณาตั้งค่าใน <a routerLink="/admin/settings" class="underline font-semibold hover:text-amber-950">หน้าตั้งค่า</a>
+                    </p>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Action Card -->
+        <div class="panel-card action-card">
+          <div class="panel-card-body space-y-3">
+            <p class="step-row"><span class="step-badge">3</span>ตรวจดูตัวอย่าง แล้วกดดาวน์โหลด</p>
+            <!-- Primary Download Button -->
+            <button
+              type="button"
+              class="btn-primary-action"
+              (click)="downloadPdf()"
+              [disabled]="!canDownload"
+            >
+              @if (generating()) {
+                <div class="spinner-ring spinner-ring-white"></div>
+                <span>กำลังประมวลผล PDF...</span>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>ยืนยันออกเลขและดาวน์โหลด PDF</span>
+              }
+            </button>
+
+            <!-- Secondary Refresh Preview Button -->
+            <button
+              type="button"
+              class="btn-secondary-action"
+              (click)="generatePreview()"
+              [disabled]="!canGenerate"
+              title="รีเฟรชตัวอย่าง PDF ใหม่"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" [class.animate-spin]="generating()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>รีเฟรชตัวอย่างเอกสาร</span>
+            </button>
+
+            <!-- Notice Callout -->
+            <div class="helper-notice">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-slate-600 leading-snug">
+                การดูตัวอย่างยังไม่จองเลขในระบบ การกดยืนยันครั้งแรกจะบันทึกเล่มที่และเลขที่ลงในฐานข้อมูล
+              </p>
+            </div>
+
+            @if (error()) {
+              <div class="error-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="text-sm font-semibold">{{ error() }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Area: Full Height PDF Live Preview -->
+      <section class="export-preview-area">
+        <div class="preview-panel-container">
+          <!-- Preview Toolbar Header -->
+          <div class="preview-toolbar">
+            <div class="toolbar-left">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="toolbar-title">{{ isAsset ? "ตัวอย่างเอกสารใบเบิกครุภัณฑ์" : "ตัวอย่างเอกสารใบเบิกวัสดุ" }} (Live PDF Preview)</span>
+              </div>
+              <div class="hidden sm:flex items-center gap-1.5">
+                <span class="preview-badge">แบบฟอร์ม A4</span>
+                <span class="preview-badge">QuestPDF</span>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              @if (generating()) {
+                <div class="toolbar-status-generating">
+                  <div class="spinner-ring spinner-ring-sm spinner-ring-white"></div>
+                  <span>กำลังเรนเดอร์ PDF...</span>
+                </div>
+              }
+
+              @if (previewUrl()) {
+                <button
+                  type="button"
+                  (click)="openInNewTab()"
+                  class="toolbar-btn"
+                  title="เปิดดูในแท็บใหม่ / สั่งพิมพ์ขนาดเต็ม"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span class="hidden md:inline">เปิดแท็บใหม่</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="downloadPdf()"
+                  [disabled]="!canDownload"
+                  class="toolbar-btn toolbar-btn-highlight"
+                  title="ออกเลขและดาวน์โหลดเอกสาร"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span class="hidden md:inline">ดาวน์โหลด</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Preview Stage / Canvas -->
+          <div class="preview-stage-canvas">
+            @if (generating() && !previewUrl()) {
+              <div class="preview-loading-card">
+                <div class="loading-doc-skeleton">
+                  <div class="spinner-ring spinner-ring-lg"></div>
+                  <p class="font-bold text-slate-800 text-base mt-3">กำลังประมวลผลตัวอย่างเอกสาร PDF...</p>
+                  <p class="text-slate-700 text-sm mt-1">ระบบกำลังดึงข้อมูลและสร้างแบบพิมพ์ใบเบิก</p>
+                </div>
+              </div>
+            } @else if (previewUrl(); as url) {
+              <div class="iframe-container">
+                <iframe
+                  class="pdf-preview-frame"
+                  [src]="url"
+                  title="ตัวอย่างใบเบิกวัสดุ PDF"
+                ></iframe>
+              </div>
+            } @else if (!loading()) {
+              <div class="empty-preview-state">
+                <div class="empty-illustration">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mt-3">พร้อมแสดงตัวอย่างเอกสาร</h3>
+                <p class="text-sm text-slate-700 mt-1 max-w-sm mx-auto">
+                  เลือกวันที่ในใบเบิกและข้าพเจ้า/ผู้รับของ จากแผงควบคุมด้านซ้าย ระบบจะแสดงตัวอย่างให้อัตโนมัติทันที
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

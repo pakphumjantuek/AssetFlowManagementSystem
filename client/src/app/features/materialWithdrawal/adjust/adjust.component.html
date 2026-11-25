@@ -1,0 +1,476 @@
+<div class="min-h-screen bg-slate-50 px-4 py-4 sm:px-6 lg:px-8 font-sans">
+  <div class="mx-auto max-w-[1920px] space-y-5">
+    <!-- Back button -->
+    <button
+      type="button"
+      (click)="back()"
+      class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-green-800 transition"
+    >
+      <span class="text-lg leading-none">←</span>
+      กลับไปหน้ารายการใบเบิก
+    </button>
+
+    <!-- Header Banner -->
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b-2 border-green-900 bg-green-900 px-6 py-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-widest text-green-200">
+              ระบบบริหารจัดการงานพัสดุ · บันทึกการเบิกจ่ายวัสดุ
+            </p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-bold text-white">
+              ปรับปรุงใบเบิกวัสดุ #{{ id }}
+            </h1>
+            <p class="mt-1 text-sm text-green-200">
+              @if (withdrawal()?.withdrawal_document_no) {
+                เลขที่ใบเบิก: <span class="font-semibold text-white">{{ withdrawal()?.withdrawal_document_no }}</span> · 
+              }
+              ระบบบันทึกผลต่างของสต็อกและเก็บประวัติการปรับปรุงย้อนหลัง
+            </p>
+          </div>
+
+          @if (impact(); as data) {
+            <span
+              class="inline-flex w-fit items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold"
+              [ngClass]="
+                data.status === 'cancelled'
+                  ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-300'
+                  : 'bg-green-50 text-green-800 ring-1 ring-green-300'
+              "
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                [ngClass]="data.status === 'cancelled' ? 'bg-rose-500' : 'bg-green-600'"
+              ></span>
+              {{ data.status === 'cancelled' ? 'ใบเบิกถูกยกเลิกแล้ว' : 'สถานะปกติ (ผ่านการเบิกจ่าย)' }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <!-- Loading Skeleton -->
+      <div class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="h-6 w-48 animate-pulse rounded bg-slate-200"></div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="h-24 animate-pulse rounded-xl bg-slate-100"></div>
+          <div class="h-24 animate-pulse rounded-xl bg-slate-100"></div>
+          <div class="h-24 animate-pulse rounded-xl bg-slate-100"></div>
+          <div class="h-24 animate-pulse rounded-xl bg-slate-100"></div>
+        </div>
+        <div class="h-64 animate-pulse rounded-xl bg-slate-100"></div>
+      </div>
+    } @else if (impact(); as data) {
+      <!-- Summary Metadata Cards -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Card 1: Document No -->
+        <div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-medium text-slate-500">เลขที่ใบเบิก</p>
+            <p class="truncate text-base font-bold text-slate-900">
+              {{ withdrawal()?.withdrawal_document_no || ('#' + id) }}
+            </p>
+            <p class="truncate text-xs text-slate-400 mt-0.5">
+              อ้างอิงรับเข้า: {{ withdrawal()?.receive_document_no || '-' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 2: Staff / Requester -->
+        <div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-200">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-medium text-slate-500">ผู้ขอเบิก</p>
+            <p class="truncate text-base font-bold text-slate-900">
+              {{ withdrawal()?.staff_name || 'ไม่ระบุผู้เบิก' }}
+            </p>
+            <p class="text-xs text-slate-400 mt-0.5">เจ้าหน้าที่ผู้รับผิดชอบ</p>
+          </div>
+        </div>
+
+        <!-- Card 3: Withdrawal Date -->
+        <div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.253 3.75m-18 0h18M3.75 7.5v11.25A2.25 2.25 0 006 21h12a2.25 2.25 0 002.25-2.25V7.5M3.75 7.5h18" />
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-medium text-slate-500">วันที่เบิกวัสดุ</p>
+            <p class="truncate text-sm sm:text-base font-bold text-slate-900">
+              {{ (withdrawal()?.withdrawal_date | thaiDate: true) || '-' }}
+            </p>
+            <p class="text-xs text-slate-400 mt-0.5">เวลาตามระบบ</p>
+          </div>
+        </div>
+
+        <!-- Card 4: Items summary -->
+        <div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-700 ring-1 ring-purple-200">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-medium text-slate-500">จำนวนรายการวัสดุ</p>
+            <p class="truncate text-base font-bold text-slate-900">
+              {{ data.items.length }} รายการ
+            </p>
+            <p class="text-xs text-slate-400 mt-0.5">
+              ยอดเดิมรวม: {{ getTotalCurrentQuantity() | number:'1.0-2' }} หน่วย
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Layout: 1920 Wide Screen Grid (Left: Table 8 cols, Right: Action & History 4 cols) -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Material Items Table (8 Columns) -->
+        <div class="xl:col-span-8 space-y-6">
+          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <!-- Table Header -->
+            <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50/75 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-800 shadow-sm ring-1 ring-green-200">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-base font-bold text-slate-900">
+                    รายการวัสดุที่ต้องปรับปรุงยอด
+                  </h2>
+                  <p class="text-xs text-slate-500">
+                    กำหนดจำนวนเบิกใหม่ในช่อง "ยอดใหม่" เพื่อปรับปรุงยอดสต็อก
+                  </p>
+                </div>
+              </div>
+
+              @if (getChangedItemsCount() > 0) {
+                <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-300">
+                  <span class="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
+                  ปรับเปลี่ยนแล้ว {{ getChangedItemsCount() }} รายการ
+                </span>
+              }
+            </div>
+
+            <!-- Helpful notice box -->
+            <div class="border-b border-slate-100 bg-sky-50/60 px-6 py-3 text-xs text-sky-900 flex items-start gap-2">
+              <svg class="h-4 w-4 text-sky-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+              </svg>
+              <div>
+                <span class="font-semibold">ข้อมูลประกอบ:</span> 
+                จำนวนต่ำสุดคำนวณจากยอดคงเหลือที่หน่วยงานปลายทางมีอยู่ในปัจจุบัน โดยระบบจะตรวจสอบยอดสต็อกและรายการที่เกิดภายหลังอีกครั้งก่อนยืนยันบันทึก
+              </div>
+            </div>
+
+            <!-- Responsive Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b border-slate-200 bg-slate-50/90 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th scope="col" class="py-3.5 pl-6 pr-3 w-14 text-center">#</th>
+                    <th scope="col" class="py-3.5 px-3">รายการวัสดุ</th>
+                    <th scope="col" class="py-3.5 px-3 text-right">ยอดเดิม</th>
+                    <th scope="col" class="py-3.5 px-3 text-right">คงเหลือปลายทาง</th>
+                    <th scope="col" class="py-3.5 px-3 text-right">จำนวนต่ำสุดเบื้องต้น</th>
+                    <th scope="col" class="py-3.5 pl-3 pr-6 text-right w-44">ยอดใหม่</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                  @for (item of data.items; track item.receive_detail_id; let i = $index) {
+                    @let diff = getItemDiff(item);
+                    @let belowMin = isBelowMinimum(item);
+                    <tr
+                      class="transition hover:bg-slate-50/80"
+                      [ngClass]="belowMin ? 'bg-rose-50/40' : (diff !== 0 ? 'bg-amber-50/20' : '')"
+                    >
+                      <!-- Index -->
+                      <td class="py-4 pl-6 pr-3 text-center text-xs font-medium text-slate-400">
+                        {{ i + 1 }}
+                      </td>
+
+                      <!-- Material Name -->
+                      <td class="py-4 px-3">
+                        <div class="font-semibold text-slate-900">{{ item.material_name }}</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">รหัสรับเข้า #{{ item.receive_detail_id }}</div>
+                      </td>
+
+                      <!-- Current Quantity -->
+                      <td class="py-4 px-3 text-right font-medium text-slate-700">
+                        {{ item.current_quantity | number:'1.0-2' }}
+                      </td>
+
+                      <!-- Destination Balance -->
+                      <td class="py-4 px-3 text-right">
+                        <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          {{ item.destination_balance | number:'1.0-2' }}
+                        </span>
+                      </td>
+
+                      <!-- Minimum Quantity -->
+                      <td class="py-4 px-3 text-right">
+                        <span
+                          class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold"
+                          [ngClass]="
+                            item.minimum_quantity > 0
+                              ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-200'
+                              : 'bg-slate-50 text-slate-600'
+                          "
+                        >
+                          {{ item.minimum_quantity | number:'1.0-2' }}
+                        </span>
+                      </td>
+
+                      <!-- New Quantity Input & Diff Pill -->
+                      <td class="py-4 pl-3 pr-6 text-right">
+                        <div class="flex flex-col items-end gap-1.5">
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            [disabled]="data.status === 'cancelled' || saving()"
+                            [(ngModel)]="quantities[item.receive_detail_id]"
+                            class="w-32 rounded-xl border px-3 py-1.5 text-right font-bold text-slate-900 shadow-sm transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                            [ngClass]="
+                              belowMin
+                                ? 'border-rose-400 bg-rose-50 text-rose-900 focus:border-rose-500 focus:ring-rose-200'
+                                : (diff !== 0
+                                    ? 'border-amber-400 bg-amber-50/50 text-slate-900 focus:border-amber-500 focus:ring-amber-200'
+                                    : 'border-slate-300 bg-white focus:border-green-600 focus:ring-green-100')
+                            "
+                          />
+
+                          <!-- Difference Badge -->
+                          <div class="flex items-center gap-1 text-[11px]">
+                            @if (diff > 0) {
+                              <span class="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-semibold text-emerald-700 bg-emerald-50">
+                                ↗ +{{ diff | number:'1.0-2' }} (เพิ่ม)
+                              </span>
+                            } @else if (diff < 0) {
+                              <span class="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-semibold text-rose-700 bg-rose-50">
+                                ↘ {{ diff | number:'1.0-2' }} (ลด)
+                              </span>
+                            } @else {
+                              <span class="text-slate-400">คงเดิม</span>
+                            }
+                          </div>
+
+                          @if (belowMin) {
+                            <span class="text-[11px] font-medium text-rose-600">
+                              ⚠ ต้องไม่ต่ำกว่า {{ item.minimum_quantity }}
+                            </span>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Summary Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50/90 px-6 py-3.5 text-sm">
+              <div class="flex items-center gap-2 text-slate-600">
+                <span>ทั้งหมด:</span>
+                <span class="font-bold text-slate-900">{{ data.items.length }} รายการ</span>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-4 text-xs sm:text-sm">
+                <div class="text-slate-500">
+                  ยอดเบิกเดิมรวม: <span class="font-semibold text-slate-700">{{ getTotalCurrentQuantity() | number:'1.0-2' }}</span>
+                </div>
+                <span class="text-slate-300">➔</span>
+                <div class="font-semibold text-emerald-900">
+                  ยอดเบิกใหม่รวม: <span class="text-base font-bold text-emerald-700">{{ getTotalNewQuantity() | number:'1.0-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Actions & Revision History (4 Columns) -->
+        <div class="xl:col-span-4 space-y-6 xl:sticky xl:top-6">
+          
+          <!-- Action Card -->
+          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 bg-slate-50/80 px-6 py-4">
+              <h2 class="text-base font-bold text-slate-900">ยืนยันการทำรายการ</h2>
+              <p class="text-xs text-slate-500">ระบุเหตุผลเพื่อบันทึกการปรับปรุงหรือยกเลิกใบเบิก</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+              @if (data.status === 'cancelled') {
+                <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900 flex items-start gap-2.5">
+                  <svg class="h-5 w-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p class="font-semibold">ใบเบิกนี้ถูกยกเลิกแล้ว</p>
+                    <p class="text-xs text-rose-700 mt-0.5">ไม่สามารถปรับปรุงจำนวนหรือยกเลิกซ้ำได้</p>
+                  </div>
+                </div>
+              } @else {
+                <!-- Reason Field -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-sm font-semibold text-slate-800" for="adjust-reason">
+                      เหตุผลการปรับปรุงหรือยกเลิก <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-[11px] text-slate-400 font-mono">{{ reason.length }}/1000</span>
+                  </div>
+
+                  <textarea
+                    id="adjust-reason"
+                    [(ngModel)]="reason"
+                    rows="4"
+                    maxlength="1000"
+                    class="w-full rounded-xl border border-slate-300 p-3 text-sm focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 placeholder:text-slate-400 transition"
+                    placeholder="ระบุเหตุผลในการปรับปรุงหรือยกเลิกใบเบิกเพื่อใช้ตรวจสอบย้อนหลัง..."
+                  ></textarea>
+                </div>
+
+                <!-- Changes Preview Box -->
+                @if (getChangedItemsCount() > 0) {
+                  <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-xs text-amber-900">
+                    <div class="font-semibold flex items-center gap-1.5">
+                      <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                      </svg>
+                      สรุปการเปลี่ยนแปลง ({{ getChangedItemsCount() }} รายการ)
+                    </div>
+                    <div class="mt-1 text-slate-700">
+                      ผลต่างสุทธิ: 
+                      <span class="font-bold" [ngClass]="(getTotalNewQuantity() - getTotalCurrentQuantity()) > 0 ? 'text-emerald-700' : 'text-rose-700'">
+                        {{ (getTotalNewQuantity() - getTotalCurrentQuantity()) > 0 ? '+' : '' }}{{ (getTotalNewQuantity() - getTotalCurrentQuantity()) | number:'1.0-2' }} หน่วย
+                      </span>
+                    </div>
+                  </div>
+                }
+
+                @if (!data.can_cancel) {
+                  <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 flex items-start gap-2">
+                    <svg class="h-4 w-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>ยกเลิกใบเบิกไม่ได้ เพราะมีรายการเบิกต่อหรือยอดสต็อกปลายทางไม่เพียงพอ</span>
+                  </div>
+                }
+
+                <!-- Action Buttons -->
+                <div class="space-y-2.5 pt-1">
+                  <button
+                    type="button"
+                    (click)="save()"
+                    [disabled]="saving() || !reason.trim() || getChangedItemsCount() === 0"
+                    class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-green-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    @if (saving()) {
+                      <span>กำลังบันทึก...</span>
+                    } @else {
+                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      <span>บันทึกการปรับปรุง</span>
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="cancelWithdrawal()"
+                    [disabled]="saving() || !reason.trim() || !data.can_cancel"
+                    class="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-rose-300 bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    <span>ยกเลิกใบเบิกและคืนสต็อก</span>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Revision History Card -->
+          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-4">
+              <div class="flex items-center gap-2.5">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">ประวัติการปรับปรุง</h3>
+                  <p class="text-[11px] text-slate-500">บันทึกประวัติการแก้ไขและยกเลิก</p>
+                </div>
+              </div>
+
+              @if (revisions().length > 0) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300">
+                  {{ revisions().length }} รายการ
+                </span>
+              }
+            </div>
+
+            <div class="p-5">
+              @if (revisions().length > 0) {
+                <div class="space-y-3.5">
+                  @for (entry of revisions(); track entry.revision_id) {
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 text-sm transition hover:bg-white hover:shadow-sm">
+                      <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                        <span
+                          class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold"
+                          [ngClass]="
+                            entry.action === 'cancel'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                          "
+                        >
+                          {{ entry.action === 'cancel' ? 'ยกเลิกใบเบิก' : 'ปรับปรุงจำนวน' }}
+                        </span>
+
+                        <span class="text-xs text-slate-500">
+                          {{ entry.created_at | thaiDate: true }} น.
+                        </span>
+                      </div>
+
+                      <div class="mt-2.5 text-xs text-slate-500">
+                        ผู้ดำเนินการ: <span class="font-medium text-slate-800">{{ entry.actor_id || 'ไม่ระบุผู้ใช้' }}</span>
+                      </div>
+
+                      <div class="mt-2 rounded-lg bg-white p-2.5 text-xs text-slate-700 ring-1 ring-slate-200/80 break-words whitespace-pre-line leading-relaxed">
+                        {{ entry.reason || 'ไม่ได้ระบุเหตุผล' }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">
+                  <svg class="mx-auto mb-2 h-7 w-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  ยังไม่มีประวัติการปรับปรุงสำหรับใบเบิกนี้
+                </div>
+              }
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    }
+  </div>
+</div>

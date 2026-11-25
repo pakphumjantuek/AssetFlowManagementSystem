@@ -1,0 +1,97 @@
+<app-data-table
+  title="ระบบจัดการบุคลากร"
+  subtitle="จัดการข้อมูลบุคลากรในระบบ"
+  [data]="staffs()"
+  [columns]="columns"
+  [idKey]="'staff_id'"
+  [isAdmin]="true"
+  [showDetail]="true"
+  [showPathTo]="true"
+  [separatePathToColumn]="true"
+  [Namepath]="'ข้อมูลพัสดุ/ครุภัณฑ์'"
+  [sortOptions]="sortOptions"
+  [filterOptions]="filterOptions()"
+  [totalItems]="staff?.count ?? 0"
+  [pageSize]="Params.pageSize"
+  [currentPage]="Params.pageNumber"
+  (search)="onSearch($event)"
+  (sortChange)="onSort($event)"
+  (filterChange)="onFilterChange($event)"
+  (pageChange)="onPageChange($event)"
+  (add)="goToCreate()"
+  (edit)="goToEdit($event)"
+  (delete)="deletePrefixes($event)"
+  (action)="handleTableAction($event)"
+>
+</app-data-table>
+
+@if (staffDetails(); as staff) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+    (click)="closeStaffDetails()"
+  >
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="staff-details-title"
+      class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+        <div>
+          <p class="text-sm font-medium text-slate-500">ข้อมูลบุคลากร</p>
+          <h2 id="staff-details-title" class="mt-1 text-xl font-bold text-blue-950">
+            รายละเอียดบุคลากร
+          </h2>
+        </div>
+        <button
+          type="button"
+          aria-label="ปิดหน้าต่างรายละเอียด"
+          class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          (click)="closeStaffDetails()"
+        >
+          ✕
+        </button>
+      </header>
+
+      <dl class="grid gap-4 px-6 py-5 sm:grid-cols-2">
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm font-medium text-slate-500">ชื่อ-นามสกุล</dt>
+          <dd class="mt-1 break-words font-semibold text-slate-900">
+            {{ staff.full_name || '-' }}
+          </dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm font-medium text-slate-500">อีเมล</dt>
+          <dd class="mt-1 break-all font-semibold text-slate-900">{{ staff.email || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm font-medium text-slate-500">เบอร์โทรศัพท์</dt>
+          <dd class="mt-1 font-semibold text-slate-900">{{ staff.phone || '-' }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <dt class="text-sm font-medium text-slate-500">สาขาวิชา</dt>
+          <dd class="mt-1 break-words font-semibold text-slate-900">
+            {{ staff.department_name || '-' }}
+          </dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4 sm:col-span-2">
+          <dt class="text-sm font-medium text-slate-500">ตำแหน่ง</dt>
+          <dd class="mt-1 break-words font-semibold text-slate-900">
+            {{ staff.position_name || '-' }}
+          </dd>
+        </div>
+      </dl>
+
+      <footer class="flex justify-end border-t border-slate-200 px-6 py-4">
+        <button
+          type="button"
+          class="rounded-lg bg-blue-900 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-950"
+          (click)="closeStaffDetails()"
+        >
+          ปิด
+        </button>
+      </footer>
+    </section>
+  </div>
+}

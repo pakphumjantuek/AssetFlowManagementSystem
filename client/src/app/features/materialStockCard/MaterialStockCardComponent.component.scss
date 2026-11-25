@@ -1,0 +1,55 @@
+.material-stock-card-page {
+  color: #1f2937;
+
+  .text-\[10px\],
+  .text-\[11px\],
+  .text-xs {
+    font-size: 0.875rem;
+    line-height: 1.35rem;
+  }
+
+  .text-sm {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .text-base {
+    font-size: 1.125rem;
+    line-height: 1.65rem;
+  }
+
+  .text-lg {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .text-xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .text-2xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+
+  .text-3xl {
+    font-size: 2.25rem;
+    line-height: 2.65rem;
+  }
+
+  button:focus-visible {
+    outline: 3px solid #047857;
+    outline-offset: 2px;
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+
+    th,
+    td {
+      vertical-align: middle;
+    }
+  }
+
+}

@@ -1,0 +1,168 @@
+<div class="border-t-4 border-emerald-900">
+  <div class="flex items-center gap-3 border-b border-emerald-200 bg-emerald-50 px-6 py-3">
+    <span class="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-800 text-sm font-bold text-white">5</span>
+    <h3 class="text-base font-bold text-emerald-950">รายการวัสดุ</h3>
+    <span class="text-sm text-slate-700">เลือกวัสดุและระบุจำนวนที่รับเข้า</span>
+  </div>
+</div>
+<div class="px-6 pb-6 pt-5">
+  <!-- Empty state -->
+  @if (materialDetailForms.length === 0) {
+    <div
+      class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/60 py-14 text-center"
+    >
+      <svg
+        class="mb-3 h-10 w-10 text-emerald-300"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
+        />
+      </svg>
+      <p class="text-sm font-medium text-slate-700">ยังไม่มีรายการวัสดุ</p>
+      <p class="mt-1 text-sm text-slate-700">กด "เพิ่มรายการวัสดุ" เพื่อเริ่มต้นบันทึกข้อมูล</p>
+    </div>
+  }
+
+  @for (group of materialDetailForms; track $index; let i = $index) {
+    <div
+      [formGroup]="group"
+      class="mb-4 overflow-hidden rounded-xl border border-slate-300 border-l-[6px] border-l-emerald-800 bg-white shadow-sm"
+    >
+      <!-- Header -->
+      <div class="flex items-center gap-3 border-b border-slate-200 bg-emerald-900 px-5 py-3.5">
+        <span
+          class="flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm font-bold text-emerald-900"
+        >
+          {{ i + 1 }}
+        </span>
+        <p class="flex-1 text-base font-bold text-white">รายการวัสดุที่ {{ i + 1 }}</p>
+
+        <button
+          type="button"
+          class="flex items-center gap-1 rounded-lg border border-red-300 bg-red-600 px-3 py-1.5 text-sm font-medium text-white font-bold transition hover:bg-red-700"
+          (click)="removeMaterialDetail(i)"
+        >
+          <svg
+            class="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          ลบรายการนี้
+        </button>
+      </div>
+
+      <!-- Fields -->
+      <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <app-select
+            label="รายการวัสดุ"
+            [control]="$any(group).controls.material_item_id"
+            [options]="optionsFor(i)"
+            optionLabel="display_name"
+            optionValue="material_item_id"
+            placeholder="-- เลือกรายการวัสดุ --"
+            [required]="true"
+            [searchable]="true"
+          />
+          <button type="button" class="mt-2 text-sm font-bold text-emerald-800 hover:underline" (click)="openCreateModal(i)">
+            ไม่พบรายการวัสดุ? เพิ่มใหม่
+          </button>
+        </div>
+
+        <app-input
+          label="จำนวนรับเข้า"
+          type="number"
+          [control]="$any(group).controls.quantity"
+          placeholder="0"
+          [required]="true"
+        />
+
+        <div class="relative">
+          <app-input
+            label="ราคาต่อหน่วย (บาท)"
+            type="number"
+            [control]="$any(group).controls.unit_price"
+            placeholder="0.00"
+            [readonly]="true"
+          />
+          <span class="absolute right-3 top-7 text-sm text-slate-700">ดึงจากรายการวัสดุ</span>
+        </div>
+
+        <div class="relative">
+          <app-input
+            label="รวมเงิน (บาท)"
+            type="number"
+            [control]="$any(group).controls.total_amount"
+            placeholder="0.00"
+            [readonly]="true"
+          />
+          <span class="absolute right-3 top-7 text-sm text-slate-700">คำนวณอัตโนมัติ</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Add button -->
+  <button
+    type="button"
+    class="mt-1 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-emerald-500 bg-emerald-50 py-3 text-base font-bold text-emerald-900 transition hover:bg-emerald-100"
+    (click)="addMaterialDetail()"
+  >
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    เพิ่มรายการวัสดุ
+  </button>
+</div>
+
+@if (isCreateModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="create-material-title">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+      <div class="border-b border-slate-200 px-6 py-4">
+        <h3 id="create-material-title" class="text-lg font-semibold text-slate-900">เพิ่มรายการวัสดุ</h3>
+      </div>
+      <div [formGroup]="newMaterialForm" class="space-y-4 p-6">
+        <div>
+          <label for="new-material-name" class="mb-1 block text-sm font-medium">ชื่อวัสดุ</label>
+          <input id="new-material-name" formControlName="material_name" class="w-full rounded-lg border border-slate-300 px-3 py-2" required />
+        </div>
+        <div>
+          <label for="new-material-unit" class="mb-1 block text-sm font-medium">หน่วยนับ</label>
+          <select id="new-material-unit" formControlName="unit_id" class="w-full rounded-lg border border-slate-300 px-3 py-2" required>
+            <option [ngValue]="null">-- เลือกหน่วยนับ --</option>
+            @for (unit of units; track unit.unit_id) {
+              <option [ngValue]="unit.unit_id">{{ unit.unit_name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="new-material-fund" class="mb-1 block text-sm font-medium">ประเภทหมวดเงิน</label>
+          <select id="new-material-fund" formControlName="fund_category_id" class="w-full rounded-lg border border-slate-300 px-3 py-2">
+            <option [ngValue]="null">-- เลือกประเภทหมวดเงิน --</option>
+            @for (fund of fundCategorys; track fund.fund_category_id) {
+              <option [ngValue]="fund.fund_category_id">{{ fund.fund_name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="new-material-price" class="mb-1 block text-sm font-medium">ราคาต่อหน่วย</label>
+          <input id="new-material-price" type="number" min="0" step="0.01" formControlName="unit_price" class="w-full rounded-lg border border-slate-300 px-3 py-2" required />
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" class="rounded-lg border border-slate-300 px-4 py-2" [disabled]="isCreatingMaterial()" (click)="isCreateModalOpen.set(false)">ยกเลิก</button>
+          <button type="button" class="rounded-lg bg-emerald-800 px-4 py-2 font-bold hover:bg-emerald-900 text-white disabled:opacity-50" [disabled]="isCreatingMaterial()" (click)="createMaterial()">{{ isCreatingMaterial() ? 'กำลังบันทึก...' : 'เพิ่มวัสดุ' }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

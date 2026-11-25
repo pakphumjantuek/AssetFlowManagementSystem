@@ -1,0 +1,644 @@
+<div class="min-h-screen bg-slate-50 px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
+  <main class="mx-auto w-full max-w-[1920px] space-y-5 2xl:space-y-6">
+    <a
+      routerLink="/admin/staffs"
+      class="inline-flex items-center gap-2 text-base font-semibold text-blue-800 hover:text-blue-950"
+    >
+      <span aria-hidden="true">←</span>
+      กลับไปหน้าบุคลากร
+    </a>
+
+    <section class="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+      <div
+        class="flex flex-col gap-4 border-b border-blue-200 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-blue-900"
+          >
+            {{ (staff?.full_name || summary()?.full_name || 'บ').charAt(0) }}
+          </div>
+          <div>
+            <p class="text-base font-medium text-blue-800">ข้อมูลพัสดุประจำตัวบุคลากร</p>
+            <h1 class="mt-0.5 text-2xl font-bold text-blue-950 sm:text-3xl">
+              {{ staff?.full_name || summary()?.full_name || 'บุคลากร #' + staffId }}
+            </h1>
+            <p class="mt-1 text-base text-slate-700">
+              สังกัด {{ staff?.department_name || summary()?.department_name || 'ไม่ระบุ' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="w-full sm:max-w-xs">
+          <label for="fiscal-year" class="mb-1 block text-base font-semibold text-blue-900"
+            >ปีงบประมาณ</label
+          >
+          <select
+            id="fiscal-year"
+            [value]="fiscalYearId || ''"
+            (change)="onFiscalYearChange($any($event.target).value)"
+            class="h-11 w-full rounded-lg border border-blue-300 bg-white px-3 text-base font-medium text-black outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">ทุกปีงบประมาณ</option>
+            @for (year of fiscalYears(); track year.fiscal_year_id) {
+              <option [value]="year.fiscal_year_id">
+                พ.ศ. {{ year.fiscal_year }} {{ year.year_name || '' }}
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+    </section>
+
+    @if (loading()) {
+      <section class="rounded-xl border border-blue-200 bg-white p-10 text-center shadow-sm">
+        <p class="font-semibold text-black">
+          กำลังโหลดข้อมูล{{
+            fiscalYearId
+              ? 'ปีงบประมาณ ' + (fiscalYear?.fiscal_year || fiscalYearId)
+              : 'ทุกปีงบประมาณ'
+          }}...
+        </p>
+      </section>
+    } @else {
+      <section class="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+        <div class="border-b border-blue-200 px-4 py-4 sm:px-5">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-blue-950">เลือกข้อมูลที่ต้องการดู</h2>
+              <p class="text-base text-slate-700">กดการ์ดเพื่อเปิดดูรายละเอียดในแต่ละหมวด</p>
+            </div>
+            @if (selectedSection()) {
+              <label class="w-full sm:max-w-xs">
+                <span class="sr-only">ค้นหารายการในหมวดนี้</span>
+                <input
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="searchQuery.set($event)"
+                  type="search"
+                  placeholder="ค้นหาในรายการ..."
+                  class="h-10 w-full rounded-lg border border-blue-300 px-3 text-base outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+            }
+          </div>
+
+          <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3" aria-label="หมวดข้อมูล">
+            <button
+              type="button"
+              (click)="selectSection('procurements')"
+              [attr.aria-pressed]="selectedSection() === 'procurements'"
+              [class]="selectedSection() === 'procurements'
+                ? 'group rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-left shadow-sm transition hover:shadow-md'
+                : 'group rounded-xl border border-blue-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-500 hover:bg-blue-50 hover:shadow-md'"
+            >
+              <span class="flex items-start justify-between gap-3">
+                <span>
+                  <span class="block text-lg font-bold text-blue-950">เอกสารโครงการ</span>
+                  <span class="mt-1 block text-sm text-slate-600">เอกสารและโครงการที่เกี่ยวข้อง</span>
+                </span>
+                <span class="rounded-lg bg-blue-100 px-3 py-1 text-lg font-bold text-blue-900">{{ procurements().length }}</span>
+              </span>
+              <span class="mt-4 flex items-center justify-between text-sm font-semibold text-blue-800">
+                เปิดดูรายการ <span aria-hidden="true" class="text-lg">→</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectSection('materials')"
+              [attr.aria-pressed]="selectedSection() === 'materials'"
+              [class]="selectedSection() === 'materials'
+                ? 'group rounded-xl border-2 border-emerald-600 bg-emerald-50 p-4 text-left shadow-sm transition hover:shadow-md'
+                : 'group rounded-xl border border-emerald-200 bg-white p-4 text-left shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:shadow-md'"
+            >
+              <span class="flex items-start justify-between gap-3">
+                <span>
+                  <span class="block text-lg font-bold text-emerald-950">พัสดุและวัสดุสาขา</span>
+                  <span class="mt-1 block text-sm text-slate-600">รับเข้าและเบิกออกจากสาขา</span>
+                </span>
+                <span class="rounded-lg bg-emerald-100 px-3 py-1 text-lg font-bold text-emerald-900">{{ materialMovements().length }}</span>
+              </span>
+              <span class="mt-4 flex items-center justify-between text-sm font-semibold text-emerald-800">
+                เปิดดูรายการ <span aria-hidden="true" class="text-lg">→</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectSection('assets')"
+              [attr.aria-pressed]="selectedSection() === 'assets'"
+              [class]="selectedSection() === 'assets'
+                ? 'group rounded-xl border-2 border-orange-600 bg-orange-50 p-4 text-left shadow-sm transition hover:shadow-md'
+                : 'group rounded-xl border border-orange-200 bg-white p-4 text-left shadow-sm transition hover:border-orange-500 hover:bg-orange-50 hover:shadow-md'"
+            >
+              <span class="flex items-start justify-between gap-3">
+                <span>
+                  <span class="block text-lg font-bold text-orange-950">ครุภัณฑ์</span>
+                  <span class="mt-1 block text-sm text-slate-600">ครุภัณฑ์และรายการย่อยในครอบครอง</span>
+                </span>
+                <span class="rounded-lg bg-orange-100 px-3 py-1 text-lg font-bold text-orange-900">{{ assets().length }}</span>
+              </span>
+              <span class="mt-4 flex items-center justify-between text-sm font-semibold text-orange-800">
+                เปิดดูรายการ <span aria-hidden="true" class="text-lg">→</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectSection('repairs')"
+              [attr.aria-pressed]="selectedSection() === 'repairs'"
+              [class]="selectedSection() === 'repairs'
+                ? 'group rounded-xl border-2 border-amber-600 bg-amber-50 p-4 text-left shadow-sm transition hover:shadow-md'
+                : 'group rounded-xl border border-amber-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-500 hover:bg-amber-50 hover:shadow-md'"
+            >
+              <span class="flex items-start justify-between gap-3">
+                <span>
+                  <span class="block text-lg font-bold text-amber-950">ประวัติการซ่อมครุภัณฑ์</span>
+                  <span class="mt-1 block text-sm text-slate-600">งานซ่อมตามรายการเบิกของบุคลากร</span>
+                </span>
+                <span class="rounded-lg bg-amber-100 px-3 py-1 text-lg font-bold text-amber-900">{{ repairs().length }}</span>
+              </span>
+              <span class="mt-4 flex items-center justify-between text-sm font-semibold text-amber-800">
+                เปิดดูรายการ <span aria-hidden="true" class="text-lg">→</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectSection('hires')"
+              [attr.aria-pressed]="selectedSection() === 'hires'"
+              [class]="selectedSection() === 'hires'
+                ? 'group rounded-xl border-2 border-violet-600 bg-violet-50 p-4 text-left shadow-sm transition hover:shadow-md'
+                : 'group rounded-xl border border-violet-200 bg-white p-4 text-left shadow-sm transition hover:border-violet-500 hover:bg-violet-50 hover:shadow-md'"
+            >
+              <span class="flex items-start justify-between gap-3">
+                <span>
+                  <span class="block text-lg font-bold text-violet-950">ประวัติการจัดจ้าง</span>
+                  <span class="mt-1 block text-sm text-slate-600">เอกสารจัดจ้างที่เป็นผู้เบิกจ่าย</span>
+                </span>
+                <span class="rounded-lg bg-violet-100 px-3 py-1 text-lg font-bold text-violet-900">{{ hires().length }}</span>
+              </span>
+              <span class="mt-4 flex items-center justify-between text-sm font-semibold text-violet-800">
+                เปิดดูรายการ <span aria-hidden="true" class="text-lg">→</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectSection('inspections')"
+              [attr.aria-pressed]="selectedSection() === 'inspections'"
+              [class]="selectedSection() === 'inspections'
+                ? 'group rounded-xl border-2 border-sky-600 bg-sky-50 p-4 text-left shadow-sm transition hover:shadow-md'
+                : 'group rounded-xl border border-sky-200 bg-white p-4 text-left shadow-sm transition hover:border-sky-500 hover:bg-sky-50 hover:shadow-md'"
+            >
+              <span class="flex items-start justify-between gap-3">
+                <span>
+                  <span class="block text-lg font-bold text-sky-950">เอกสารโครงการที่ตรวจรับ</span>
+                  <span class="mt-1 block text-sm text-slate-600">เอกสารที่ระบุชื่อเป็นผู้ตรวจรับ</span>
+                </span>
+                <span class="rounded-lg bg-sky-100 px-3 py-1 text-lg font-bold text-sky-900">{{ inspectedProcurements().length }}</span>
+              </span>
+              <span class="mt-4 flex items-center justify-between text-sm font-semibold text-sky-800">
+                เปิดดูรายการ <span aria-hidden="true" class="text-lg">→</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        @if (selectedSection()) {
+        <div class="border-t border-blue-200 p-4 sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <h3 class="text-lg font-bold text-blue-950">รายการที่เลือก</h3>
+            <button
+              type="button"
+              (click)="clearSection()"
+              class="rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-50"
+            >
+              กลับไปเลือกหมวด
+            </button>
+          </div>
+          @if (selectedSection() === 'procurements') {
+            @if (filteredProcurements().length === 0) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-black">
+                ไม่พบเอกสารจัดซื้อจัดจ้าง
+              </p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-blue-200">
+                <table class="w-full min-w-[760px] text-left text-base">
+                  <thead class="bg-blue-100 text-sm font-semibold uppercase text-blue-950">
+                    <tr>
+                      <th class="px-4 py-3">เลขที่เอกสาร</th>
+                      <th class="px-4 py-3">โครงการ</th>
+                      <th class="px-4 py-3">หมวด / สถานะ</th>
+                      <th class="px-4 py-3">วันที่</th>
+                      <th class="px-4 py-3 text-right">มูลค่ารวม</th>
+                      <th class="px-4 py-3">ดู</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-blue-200">
+                    @for (
+                      procurement of filteredProcurements();
+                      track procurement.procurement_record_id
+                    ) {
+                      <tr class="hover:bg-slate-50">
+                        <td class="whitespace-nowrap px-4 py-3 font-semibold text-black">
+                          {{ procurement.document_no || '-' }}
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="font-medium text-black">
+                            {{ procurement.project_name || '-' }}
+                          </div>
+                          <div class="mt-0.5 text-sm text-black">
+                            {{ procurement.project_code || '-' }}
+                          </div>
+                        </td>
+                        <td class="px-4 py-3">
+                          <div>{{ procurement.category || '-' }}</div>
+                          <div class="mt-0.5 text-sm text-black">
+                            {{ procurement.status || '-' }}
+                          </div>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3">
+                          {{ procurement.document_date | thaiDate }}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right font-medium">
+                          {{ procurement.total_amount | number: '1.2-2' }} บาท
+                        </td>
+                        <td class="px-4 py-3">
+                          <button
+                            type="button"
+                            (click)="openProcurementDetail(procurement)"
+                            class="font-semibold text-blue-800 hover:text-blue-950 hover:underline"
+                          >
+                            รายละเอียด
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          @if (selectedSection() === 'materials') {
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <span class="text-sm font-semibold text-slate-800">รับเข้า / เบิกออกจากสาขา ({{ materialMovements().length }})</span>
+
+              <!-- Search input -->
+              <div class="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="searchQuery.set($event)"
+                  placeholder="ค้นหารายการ / ใบเบิก / โครงการ..."
+                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            @if (loadingMaterialHistory()) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-slate-600">
+                กำลังโหลดประวัติวัสดุสาขา...
+              </p>
+            } @else if (filteredMaterialMovements().length === 0) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-black">
+                ไม่พบรายการรับเข้าหรือเบิกออกจากสาขา
+              </p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full min-w-[950px] text-left text-base">
+                  <thead class="bg-slate-100 text-sm font-semibold uppercase text-slate-900">
+                    <tr>
+                      <th class="px-4 py-3">ประเภท / วันที่</th>
+                      <th class="px-4 py-3">รายการวัสดุ</th>
+                      <th class="px-4 py-3">เอกสาร / ใบเบิก</th>
+                      <th class="px-4 py-3">โครงการ</th>
+                      <th class="px-4 py-3 text-right">จำนวน</th>
+                      <th class="px-4 py-3 text-right">ราคา/หน่วย</th>
+                      <th class="px-4 py-3 text-right">รวมเงิน</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    @for (item of filteredMaterialMovements(); track item.id) {
+                      <tr [class]="item.direction === 'IN' ? 'bg-emerald-50/30 hover:bg-emerald-50/60' : 'bg-amber-50/30 hover:bg-amber-50/60'">
+                        <td class="whitespace-nowrap px-4 py-3">
+                          <span [class]="'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ' + (item.direction === 'IN' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')">
+                            {{ item.direction === 'IN' ? '↓ รับเข้าสต็อกสาขา' : '↑ เบิกออกจากสาขา' }}
+                          </span>
+                          <div class="mt-1 text-sm text-slate-600">{{ item.date | thaiDate }}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="font-semibold text-emerald-950">{{ item.materialName }}</div>
+                          <div class="mt-0.5 text-xs text-slate-500">
+                            {{ item.materialCode || '-' }}
+                          </div>
+                          @if (item.remark) {
+                            <div class="mt-1 text-xs text-amber-900 bg-amber-100/80 rounded px-1.5 py-0.5 w-fit">
+                              หมายเหตุ: {{ item.remark }}
+                            </div>
+                          }
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3">
+                          <div class="font-medium text-slate-900">
+                            {{ item.withdrawalDocumentNo ? 'ใบเบิก ' + item.withdrawalDocumentNo : (item.documentNo || '-') }}
+                          </div>
+                          @if (item.withdrawalDocumentNo && item.documentNo && item.withdrawalDocumentNo !== item.documentNo) {
+                            <div class="mt-0.5 text-xs text-slate-500">เอกสาร: {{ item.documentNo }}</div>
+                          }
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="text-sm font-medium text-slate-900">{{ item.projectName || '-' }}</div>
+                          @if (item.projectCode) {
+                            <div class="mt-0.5 text-xs text-slate-500">{{ item.projectCode }}</div>
+                          }
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right">
+                          <span [class]="item.direction === 'IN' ? 'font-semibold text-emerald-700' : 'font-semibold text-amber-700'">
+                            {{ item.direction === 'IN' ? '+' : '−' }}{{ item.quantity | number: '1.0-2' }}
+                          </span>
+                          <span class="ml-1 text-sm text-slate-600">{{ item.unitName }}</span>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right text-sm text-slate-600">
+                          {{ item.unitPrice | number: '1.2-2' }} ฿
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-900">
+                          {{ item.totalAmount | number: '1.2-2' }} บาท
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          @if (selectedSection() === 'assets') {
+            @if (filteredAssets().length === 0) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-black">
+                ไม่พบครุภัณฑ์ในปีงบประมาณนี้
+              </p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-orange-200">
+                <table class="w-full min-w-[920px] text-left text-base">
+                  <thead class="bg-orange-100 text-sm font-semibold uppercase text-orange-950">
+                    <tr>
+                      <th class="px-4 py-3">ชื่อครุภัณฑ์</th>
+                      <th class="px-4 py-3">เลขที่ใบเบิก</th>
+                      <th class="px-4 py-3">โครงการ</th>
+                      <th class="px-4 py-3">วันที่เบิก</th>
+                      <th class="px-4 py-3">สถานที่จัดเก็บ</th>
+                      <!-- <th class="px-4 py-3 text-right">รายการย่อย</th> -->
+                      <th class="px-4 py-3">ครุภัณฑ์ย่อย</th>
+                      <th class="px-4 py-3">รายละเอียด</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-orange-200">
+                    @for (
+                      asset of filteredAssets();
+                      track asset.asset_id + '-' + asset.procurement_withdrawal_id
+                    ) {
+                      <tr class="hover:bg-orange-50">
+                        <td class="px-4 py-3 font-semibold text-orange-900">
+                          {{ asset.asset_name }}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3">
+                          {{ asset.withdrawal_document_no || '-' }}
+                        </td>
+                        <td class="px-4 py-3">
+                          <div>{{ asset.project_name || '-' }}</div>
+                          <div class="mt-0.5 text-sm text-slate-600">
+                            {{ asset.project_code || '-' }}
+                          </div>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3">
+                          {{ asset.withdrawal_date | thaiDate }}
+                        </td>
+                        <td class="px-4 py-3">{{ asset.storage_location || '-' }}</td>
+                        <!-- <td class="px-4 py-3 text-right">{{ asset.sub_item_count }}</td> -->
+                        <td class="px-4 py-3">
+                          <button
+                            type="button"
+                            (click)="openAssetSubItems(asset)"
+                            class="font-semibold text-orange-800 hover:text-orange-950 hover:underline"
+                          >
+                            ดูรายการย่อย
+                          </button>
+                        </td>
+                        <td class="px-4 py-3">
+                          <button
+                            type="button"
+                            (click)="openAssetDetail(asset)"
+                            class="font-semibold text-orange-800 hover:text-orange-950 hover:underline"
+                          >
+                            รายละเอียด
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          @if (selectedSection() === 'repairs') {
+            @if (loadingRepairs()) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-slate-600">กำลังโหลดประวัติการซ่อม...</p>
+            } @else if (filteredRepairs().length === 0) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-black">
+                ไม่พบประวัติการซ่อมครุภัณฑ์
+              </p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-amber-200">
+                <table class="w-full min-w-[1050px] text-left text-base">
+                  <thead class="bg-amber-100 text-sm font-semibold text-amber-950">
+                    <tr>
+                      <th class="px-4 py-3">วันที่ซ่อม</th>
+                      <th class="px-4 py-3">ครุภัณฑ์ตามเอกสาร</th>
+                      <th class="px-4 py-3">เลขที่ซ่อม / โครงการ</th>
+                      <th class="px-4 py-3">อาการเสีย</th>
+                      <th class="px-4 py-3">ร้านซ่อม</th>
+                      <th class="px-4 py-3">สถานะ</th>
+                      <th class="px-4 py-3 text-right">ค่าใช้จ่าย</th>
+                      <th class="px-4 py-3">ดู</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-amber-200">
+                    @for (repair of filteredRepairs(); track repair.asset_repair_id) {
+                      <tr class="hover:bg-amber-50">
+                        <td class="whitespace-nowrap px-4 py-3">{{ repair.repair_date | thaiDate }}</td>
+                        <td class="max-w-[240px] px-4 py-3 font-semibold text-amber-950">{{ repair.asset_names || '-' }}</td>
+                        <td class="px-4 py-3">
+                          <div>{{ repair.repair_document_no || '-' }}</div>
+                          <div class="text-sm text-slate-600">{{ repair.project_code || '-' }}</div>
+                        </td>
+                        <td class="max-w-[280px] px-4 py-3">{{ repair.problem_description || '-' }}</td>
+                        <td class="px-4 py-3">{{ repair.repair_shop_name || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3">{{ repair.status || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right">{{ repair.repair_cost ?? 0 | number: '1.2-2' }} บาท</td>
+                        <td class="px-4 py-3">
+                          <button type="button" (click)="openRepairDetail(repair)" class="font-semibold text-amber-800 hover:text-amber-950 hover:underline">
+                            รายละเอียด
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          @if (selectedSection() === 'hires') {
+            @if (loadingHires()) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-slate-600">กำลังโหลดประวัติการจัดจ้าง...</p>
+            } @else if (filteredHires().length === 0) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-black">ไม่พบประวัติการจัดจ้าง</p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-violet-200">
+                <table class="w-full min-w-[1050px] text-left text-base">
+                  <thead class="bg-violet-100 text-sm font-semibold text-violet-950">
+                    <tr>
+                      <th class="px-4 py-3">เลขที่เอกสาร</th>
+                      <th class="px-4 py-3">วันที่เอกสาร</th>
+                      <th class="px-4 py-3">โครงการ</th>
+                      <th class="px-4 py-3">รายการจ้าง</th>
+                      <th class="px-4 py-3">บริษัท/ร้าน</th>
+                      <th class="px-4 py-3">สถานะ</th>
+                      <th class="px-4 py-3 text-right">มูลค่ารวม</th>
+                      <th class="px-4 py-3">ดู</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-violet-200">
+                    @for (hire of filteredHires(); track hire.procurement_record_id) {
+                      <tr class="hover:bg-violet-50">
+                        <td class="whitespace-nowrap px-4 py-3 font-semibold text-violet-950">{{ hire.document_no || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3">{{ hire.document_date | thaiDate }}</td>
+                        <td class="px-4 py-3">
+                          <div>{{ hire.project_name || '-' }}</div>
+                          <div class="text-sm text-slate-600">{{ hire.project_code || '-' }}</div>
+                        </td>
+                        <td class="max-w-[280px] px-4 py-3">
+                          <div>{{ hire.hire_names.join(', ') || '-' }}</div>
+                          <button type="button" (click)="showHireItems(hire)" class="mt-1 font-semibold text-violet-800 hover:text-violet-950 hover:underline">
+                            ดูรายการจัดจ้าง ({{ hire.hire_items.length }})
+                          </button>
+                        </td>
+                        <td class="px-4 py-3">{{ hire.vendor_name || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3">{{ hire.status || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right">{{ hire.total_amount | number: '1.2-2' }} บาท</td>
+                        <td class="px-4 py-3">
+                          <button type="button" (click)="openHireDetail(hire)" class="font-semibold text-violet-800 hover:text-violet-950 hover:underline">รายละเอียด</button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          @if (selectedSection() === 'inspections') {
+            @if (loadingInspections()) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-slate-600">กำลังโหลดเอกสารที่ตรวจรับ...</p>
+            } @else if (filteredInspections().length === 0) {
+              <p class="rounded-lg bg-slate-50 px-4 py-8 text-center text-base text-black">ไม่พบเอกสารโครงการที่ตรวจรับ</p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-sky-200">
+                <table class="w-full min-w-[900px] text-left text-base">
+                  <thead class="bg-sky-100 text-sm font-semibold text-sky-950">
+                    <tr>
+                      <th class="px-4 py-3">วันที่เอกสาร</th>
+                      <th class="px-4 py-3">เลขที่เอกสาร</th>
+                      <th class="px-4 py-3">โครงการ</th>
+                      <th class="px-4 py-3">ประเภทค่าใช้จ่าย</th>
+                      <th class="px-4 py-3">สถานะ</th>
+                      <th class="px-4 py-3 text-right">มูลค่ารวม</th>
+                      <th class="px-4 py-3">ดู</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-sky-200">
+                    @for (item of filteredInspections(); track item.procurement_record_id) {
+                      <tr class="hover:bg-sky-50">
+                        <td class="whitespace-nowrap px-4 py-3">{{ item.document_date | thaiDate }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 font-semibold text-sky-950">{{ item.document_no || '-' }}</td>
+                        <td class="px-4 py-3">
+                          <div>{{ item.project_name || '-' }}</div>
+                          <div class="text-sm text-slate-600">{{ item.project_code || '-' }}</div>
+                        </td>
+                        <td class="px-4 py-3">{{ item.expense_type_name || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3">{{ item.status || '-' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right">{{ item.total_amount | number: '1.2-2' }} บาท</td>
+                        <td class="px-4 py-3">
+                          <button type="button" (click)="openInspectedProcurementDetail(item)" class="font-semibold text-sky-800 hover:text-sky-950 hover:underline">รายละเอียด</button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+        </div>
+        }
+      </section>
+    }
+  </main>
+</div>
+
+@if (selectedHire(); as hire) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" (click)="closeHireItems()">
+    <section role="dialog" aria-modal="true" aria-labelledby="hire-items-title"
+      class="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+      (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between gap-4 border-b border-violet-200 bg-violet-50 px-5 py-4 sm:px-6">
+        <div>
+          <h2 id="hire-items-title" class="text-xl font-bold text-violet-950">รายการจัดจ้าง</h2>
+          <p class="mt-1 text-sm text-slate-600">เอกสาร {{ hire.document_no || '-' }} · {{ hire.project_name || '-' }}</p>
+        </div>
+        <button type="button" (click)="closeHireItems()" aria-label="ปิดรายการจัดจ้าง"
+          class="rounded-lg px-3 py-1 text-xl text-slate-600 hover:bg-violet-100">×</button>
+      </div>
+      <div class="overflow-auto p-5 sm:p-6">
+        @if (hire.hire_items.length === 0) {
+          <p class="rounded-lg bg-slate-50 p-8 text-center text-slate-600">ไม่มีรายการจัดจ้างในเอกสารนี้</p>
+        } @else {
+          <div class="overflow-x-auto rounded-lg border border-violet-200">
+            <table class="w-full min-w-[820px] text-left text-sm">
+              <thead class="bg-violet-100 font-semibold text-violet-950">
+                <tr>
+                  <th class="px-4 py-3">ลำดับ</th>
+                  <th class="px-4 py-3">รายการจัดจ้าง</th>
+                  <th class="px-4 py-3 text-right">จำนวน</th>
+                  <th class="px-4 py-3 text-right">ราคาต่อหน่วย</th>
+                  <th class="px-4 py-3 text-right">รวมเงิน</th>
+                  <th class="px-4 py-3">รายละเอียด</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-violet-100">
+                @for (item of hire.hire_items; track item.hire_detail_id) {
+                  <tr>
+                    <td class="px-4 py-3">{{ item.item_no }}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-900">{{ item.hire_name }}</td>
+                    <td class="px-4 py-3 text-right">{{ item.quantity | number: '1.0-2' }}</td>
+                    <td class="px-4 py-3 text-right">{{ item.unit_price | number: '1.2-2' }}</td>
+                    <td class="px-4 py-3 text-right font-semibold">{{ item.total_amount | number: '1.2-2' }} บาท</td>
+                    <td class="max-w-[240px] px-4 py-3">
+                      <div>{{ item.operation_reason || '-' }}</div>
+                      @if (item.remark) { <div class="mt-1 text-slate-500">{{ item.remark }}</div> }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+        <button type="button" (click)="closeHireItems()" class="rounded-lg bg-violet-700 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-800">ปิด</button>
+      </div>
+    </section>
+  </div>
+}

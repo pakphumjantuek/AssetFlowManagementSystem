@@ -1,0 +1,390 @@
+<div
+  class="public-portal min-h-screen bg-slate-100 font-sans text-slate-900"
+  style="font-family: 'Sarabun', sans-serif"
+>
+  <!-- Identity bar -->
+  <div class="bg-blue-950 text-white print:hidden">
+    <div class="mx-auto flex max-w-[1760px] flex-wrap items-center justify-between gap-3 px-4 py-2 text-sm sm:px-6 lg:px-8">
+      <a
+        [routerLink]="['/portal/staffs', staffId, 'dashboard']"
+        [queryParams]="backQueryParams"
+        [state]="{ staff }"
+        class="inline-flex items-center gap-1 font-semibold text-white hover:text-amber-200"
+      >
+        <i class="material-icons text-base">arrow_back</i>
+        {{ backLabel }}
+      </a>
+      <button
+        type="button"
+        onclick="window.print()"
+        class="inline-flex items-center gap-1.5 rounded-md bg-amber-400 px-4 py-1.5 text-sm font-bold text-slate-950 hover:bg-amber-300 cursor-pointer"
+      >
+        <i class="material-icons text-base">print</i> พิมพ์เอกสาร
+      </button>
+    </div>
+  </div>
+
+  <!-- Document header -->
+  <header class="border-b-4 border-amber-400 bg-white shadow-sm print:shadow-none">
+    <div class="mx-auto max-w-[1760px] px-4 py-5 sm:px-6 lg:px-8">
+      <p class="text-sm font-bold text-amber-800">รายละเอียดเอกสารพัสดุและครุภัณฑ์</p>
+      <h1 class="mt-0.5 break-words text-2xl font-bold text-blue-950 xl:text-3xl">{{ title() }}</h1>
+      <dl class="mt-3 grid gap-x-8 gap-y-1 text-base sm:grid-cols-2">
+        <div class="flex gap-2">
+          <dt class="shrink-0 text-slate-700">ผู้รับผิดชอบ:</dt>
+          <dd class="font-bold text-slate-900">{{ staff?.full_name || 'ไม่ระบุชื่อ' }}</dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="shrink-0 text-slate-700">สังกัด:</dt>
+          <dd class="font-bold text-slate-900">{{ staff?.department_name || '-' }}</dd>
+        </div>
+      </dl>
+    </div>
+
+  </header>
+
+  <!-- Tabs: document details / item list -->
+  <div class="mx-auto max-w-[1760px] px-4 pt-5 sm:px-6 lg:px-8 print:hidden">
+    <div class="flex flex-wrap gap-1 border-b border-slate-300" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        (click)="tab.set('detail')"
+        class="rounded-t-md border border-b-0 px-6 py-2.5 text-base font-bold transition cursor-pointer"
+        [class.bg-white]="tab() === 'detail'"
+        [class.text-blue-950]="tab() === 'detail'"
+        [class.border-slate-300]="tab() === 'detail'"
+        [class.border-t-4]="tab() === 'detail'"
+        [class.border-t-amber-400]="tab() === 'detail'"
+        [class.bg-blue-900]="tab() !== 'detail'"
+        [class.text-white]="tab() !== 'detail'"
+        [class.border-blue-900]="tab() !== 'detail'"
+      >
+        รายละเอียดเอกสาร
+      </button>
+      <button
+        type="button"
+        role="tab"
+        (click)="tab.set('items')"
+        class="rounded-t-md border border-b-0 px-6 py-2.5 text-base font-bold transition cursor-pointer"
+        [class.bg-white]="tab() === 'items'"
+        [class.text-blue-950]="tab() === 'items'"
+        [class.border-slate-300]="tab() === 'items'"
+        [class.border-t-4]="tab() === 'items'"
+        [class.border-t-amber-400]="tab() === 'items'"
+        [class.bg-blue-900]="tab() !== 'items'"
+        [class.text-white]="tab() !== 'items'"
+        [class.border-blue-900]="tab() !== 'items'"
+      >
+        รายการ ({{ itemCount() }})
+      </button>
+    </div>
+  </div>
+
+  <main class="mx-auto grid max-w-[1760px] gap-5 px-4 py-5 sm:px-6 lg:px-8"
+    [class]="tab() === 'detail' ? 'xl:grid-cols-[minmax(0,1fr)_360px]' : ''"
+  >
+    <div class="min-w-0 space-y-5">
+    <!-- Document information -->
+    @if (tab() === 'detail' && record(); as r) {
+      <section class="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-amber-400 bg-blue-900 px-6 py-4 text-white">
+          <div>
+            <h2 class="text-lg font-bold">ข้อมูลเอกสาร</h2>
+            <p class="text-sm text-slate-100">แสดงรายละเอียดเอกสารและประวัติการเปลี่ยนสถานะ</p>
+          </div>
+          <span class="rounded-full bg-white px-4 py-1 text-base font-bold text-blue-950">{{ r.status || 'ไม่ระบุสถานะ' }}</span>
+        </div>
+
+        <div class="space-y-6 p-4 sm:p-6">
+          <div>
+            <h3 class="mb-3 border-b-2 border-blue-900 pb-2 text-lg font-bold text-blue-950">ข้อมูลทั่วไป</h3>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">เลขที่เอกสาร</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.document_no || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">เอกสารขออนุมัติเลขที่</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.decree_document_no || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">เลขที่ใบเบิก</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.withdrawal_document_no || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">วันที่สร้างเอกสาร</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.document_date | thaiDate }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">วันที่ตรวจรับ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.inspection_date | thaiDate }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">เลขที่อ้างอิง</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.reference_no || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">วันที่อนุมัติ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.approval_date | thaiDate }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="mb-3 border-b-2 border-blue-900 pb-2 text-lg font-bold text-blue-950">ข้อมูลการเงินและงบประมาณ</h3>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">จำนวนเงิน</p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-blue-950">{{ r.total_amount || 0 | number: '1.2-2' }} บาท</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3 md:col-span-2">
+                <p class="text-sm font-bold text-slate-700">จำนวนเงินเป็นตัวอักษร</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.amount_text || 'ศูนย์บาทถ้วน' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">ปีงบประมาณ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.fiscal_year_name || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">หมวดเงิน</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.fund_category_name || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">งบประมาณ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.budget_source_name || '-' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="mb-3 border-b-2 border-blue-900 pb-2 text-lg font-bold text-blue-950">ข้อมูลที่เกี่ยวข้อง</h3>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">รหัสโครงการ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.project_code || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">ดำเนินการ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.operation_type_name || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">เบิกจ่ายเป็นค่าวัสดุ/จ้าง</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.expense_type_name || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">สังกัดหน่วยงาน</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.department_name || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">บริษัท/ร้าน</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.vendor_name || '-' }}</p>
+              </div>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-bold text-slate-700">ผู้ตรวจรับ</p>
+                <p class="mt-1 text-lg font-bold text-slate-900">{{ r.staff_fullname || '-' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="mb-3 border-b-2 border-blue-900 pb-2 text-lg font-bold text-blue-950">หมายเหตุ</h3>
+            <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+              <p class="min-h-8 text-base font-medium text-slate-800">{{ r.remark || '-' }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    @if (tab() === 'items') {
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center rounded-md border border-slate-300 bg-white py-20 text-slate-700 shadow-sm">
+        <div class="mb-3 h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-blue-900"></div>
+        <p class="text-base font-bold text-slate-900">กำลังดึงข้อมูลเอกสาร...</p>
+      </div>
+    } @else if (detail()) {
+      <!-- MATERIAL -->
+      @if (detail()!.category === 'วัสดุ') {
+        @for (material of groupedMaterials(); track material.material_name) {
+          <section class="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-slate-100 px-6 py-4">
+              <div>
+                <h2 class="text-lg font-bold text-blue-950">{{ material.material_name }}</h2>
+                <p class="text-sm text-slate-700">
+                  จำนวนรับเข้าสะสม <strong class="text-slate-900">{{ material.total_quantity | number: '1.0-2' }}</strong> รายการ
+                </p>
+              </div>
+              <span class="rounded-full border border-slate-300 bg-white px-3 py-0.5 text-sm font-bold text-slate-800">
+                {{ material.items.length }} รายการตรวจรับ
+              </span>
+            </div>
+
+            <div class="overflow-x-auto p-4 sm:p-6">
+              <table class="w-full min-w-[760px] border-separate border-spacing-0 overflow-hidden rounded-md border border-slate-300 text-left text-base">
+                <thead>
+                  <tr class="bg-blue-900 text-white">
+                    <th class="w-28 whitespace-nowrap px-4 py-4 text-center font-bold">ลำดับ</th>
+                    <th class="px-6 py-4 font-bold">ชื่อรายการพัสดุ</th>
+                    <th class="px-6 py-4 text-right font-bold">จำนวน</th>
+                    <th class="px-6 py-4 text-right font-bold">ราคาต่อหน่วย</th>
+                    <th class="px-6 py-4 text-right font-bold">ราคารวม (บาท)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of material.items; track item.receive_detail_id; let odd = $odd) {
+                    <tr class="transition hover:bg-blue-100/70" [class.bg-slate-50]="odd">
+                      <td class="border-t border-slate-200 px-6 py-5 text-center text-slate-700">{{ item.item_no }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 font-bold text-slate-900">{{ item.material_name }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ item.quantity | number: '1.0-2' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ item.unit_price | number: '1.2-2' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right font-bold tabular-nums text-blue-950">{{ item.total_amount | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      }
+
+      <!-- ASSET -->
+      @if (detail()!.category === 'ครุภัณฑ์') {
+        @for (asset of groupedAssets(); track asset.withdrawal_document_no + '-' + asset.asset_name) {
+          <section class="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
+            <div class="border-b border-slate-300 bg-slate-100 px-6 py-4">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <h2 class="text-lg font-bold text-blue-950">{{ asset.asset_name }}</h2>
+                <span class="rounded-full border border-slate-300 bg-white px-3 py-0.5 text-sm font-bold text-slate-800">
+                  {{ asset.subItems.length }} ครุภัณฑ์ย่อย
+                </span>
+              </div>
+              <dl class="mt-2 grid gap-x-8 gap-y-1 text-base sm:grid-cols-2 xl:grid-cols-3">
+                <div class="flex gap-2">
+                  <dt class="shrink-0 text-slate-700">เลขที่ใบเบิก:</dt>
+                  <dd class="font-bold text-slate-900">{{ asset.withdrawal_document_no }}</dd>
+                </div>
+                <div class="flex gap-2">
+                  <dt class="shrink-0 text-slate-700">วันที่เบิก:</dt>
+                  <dd class="font-bold text-slate-900">{{ asset.withdrawal_date | thaiDate }}</dd>
+                </div>
+                <div class="flex gap-2">
+                  <dt class="shrink-0 text-slate-700">สถานที่เก็บรักษา:</dt>
+                  <dd class="font-bold text-slate-900">{{ asset.storage_location || '-' }}</dd>
+                </div>
+              </dl>
+              @if (asset.purpose) {
+                <p class="mt-2 text-base text-slate-800">
+                  <strong>วัตถุประสงค์การใช้งาน:</strong> {{ asset.purpose }}
+                </p>
+              }
+            </div>
+
+            <div class="overflow-x-auto p-4 sm:p-6">
+              <table class="w-full min-w-[640px] border-separate border-spacing-0 overflow-hidden rounded-md border border-slate-300 text-left text-base">
+                <thead>
+                  <tr class="bg-blue-900 text-white">
+                    <th class="w-28 whitespace-nowrap px-4 py-4 text-center font-bold">ลำดับ</th>
+                    <th class="px-6 py-4 font-bold">ชื่อรายการครุภัณฑ์ย่อย / หมายเลข</th>
+                    <th class="px-6 py-4 text-right font-bold">จำนวน</th>
+                    <th class="px-6 py-4 text-right font-bold">ราคาต่อหน่วย</th>
+                    <th class="px-6 py-4 text-right font-bold">ราคารวม (บาท)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (subItem of asset.subItems; track subItem.procurement_withdrawal_id + '-' + subItem.sub_item_name; let i = $index; let odd = $odd) {
+                    <tr class="transition hover:bg-blue-100/70" [class.bg-slate-50]="odd">
+                      <td class="border-t border-slate-200 px-6 py-5 text-center text-slate-700">{{ i + 1 }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 font-bold text-slate-900">{{ subItem.sub_item_name }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ subItem.quantity ?? 0 | number: '1.0-2' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ subItem.unit_price | number: '1.2-2' }}</td>
+                      <td class="border-t border-slate-200 px-6 py-5 text-right font-bold tabular-nums text-blue-950">{{ subItem.total_price | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      }
+
+      <!-- HIRE / OTHERS -->
+      @if (detail()!.category !== 'วัสดุ' && detail()!.category !== 'ครุภัณฑ์') {
+        <section class="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
+          <div class="border-b border-slate-300 bg-slate-100 px-6 py-4">
+            <h2 class="text-lg font-bold text-blue-950">รายการจัดจ้าง / จ้างเหมาบริการ</h2>
+            <p class="text-sm text-slate-700">ทั้งหมด {{ detail()!.hire_details.length }} รายการ</p>
+          </div>
+
+          <div class="overflow-x-auto p-4 sm:p-6">
+            <table class="w-full min-w-[760px] border-separate border-spacing-0 overflow-hidden rounded-md border border-slate-300 text-left text-base">
+              <thead>
+                <tr class="bg-blue-900 text-white">
+                  <th class="w-28 whitespace-nowrap px-4 py-4 text-center font-bold">ลำดับ</th>
+                  <th class="px-6 py-4 font-bold">รายละเอียดงานจ้าง</th>
+                  <th class="px-6 py-4 text-right font-bold">จำนวน</th>
+                  <th class="px-6 py-4 text-right font-bold">หน่วยละ</th>
+                  <th class="px-6 py-4 text-right font-bold">ราคารวม (บาท)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of detail()!.hire_details; track item.hire_detail_id; let odd = $odd) {
+                  <tr class="transition hover:bg-blue-100/70" [class.bg-slate-50]="odd">
+                    <td class="border-t border-slate-200 px-6 py-5 text-center text-slate-700">{{ item.item_no }}</td>
+                    <td class="border-t border-slate-200 px-6 py-5">
+                      <p class="font-bold text-slate-900">{{ item.hire_name }}</p>
+                      @if (item.operation_reason || item.remark) {
+                        <p class="mt-1 text-sm text-slate-700">หมายเหตุ: {{ item.operation_reason || item.remark }}</p>
+                      }
+                    </td>
+                    <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ item.quantity | number: '1.0-2' }}</td>
+                    <td class="border-t border-slate-200 px-6 py-5 text-right tabular-nums">{{ item.unit_price | number: '1.2-2' }}</td>
+                    <td class="border-t border-slate-200 px-6 py-5 text-right font-bold tabular-nums text-blue-950">{{ item.total_amount | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+    }
+    </div>
+
+    <!-- Status history -->
+    @if (tab() === 'detail') {
+    <aside class="h-fit overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm xl:sticky xl:top-5 print:hidden">
+      <div class="border-b border-slate-300 bg-slate-100 px-5 py-4">
+        <h2 class="text-lg font-bold text-blue-950">ประวัติสถานะ</h2>
+        <p class="text-sm text-slate-700">ลำดับการเปลี่ยนสถานะของเอกสารฉบับนี้</p>
+      </div>
+
+      @if (statusHistories().length) {
+        <ol class="space-y-4 p-5">
+          @for (h of statusHistories(); track h.status_history_id) {
+            <li class="relative pl-6">
+              <span class="absolute left-0 top-2 h-3 w-3 rounded-full bg-blue-900 ring-4 ring-blue-100"></span>
+              <div class="rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                <p class="text-base font-bold text-slate-900">{{ h.from_status || '-' }} → {{ h.to_status || '-' }}</p>
+                <p class="mt-1 text-sm text-slate-700">{{ h.changed_at | thaiDate: true }}</p>
+                @if (h.changed_by_staff_name) {
+                  <p class="text-sm text-slate-700">{{ h.changed_by_staff_name }}</p>
+                }
+                @if (h.remark) {
+                  <p class="mt-2 rounded bg-white px-3 py-2 text-sm text-slate-800 ring-1 ring-slate-200">{{ h.remark }}</p>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="px-5 py-10 text-center text-base text-slate-700">ยังไม่มีประวัติการเปลี่ยนสถานะ</p>
+      }
+    </aside>
+    }
+  </main>
+
+  <footer class="mt-2 border-t border-slate-300 bg-white py-4 text-center text-sm text-slate-700 print:hidden">
+    ระบบสืบค้นข้อมูลพัสดุและครุภัณฑ์ • ข้อมูลเพื่อการตรวจสอบภายในหน่วยงาน
+  </footer>
+</div>
