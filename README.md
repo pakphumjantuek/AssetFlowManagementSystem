@@ -34,7 +34,7 @@
 - **แยก backend / client ชัดเจน** เป็นสองโฟลเดอร์ในรีโปเดียว
 - **สถาปัตยกรรมแบบแยกชั้น** `Core` (Entity และ Interface) → `Infrastructure` (EF Core, Repository, Migrations) → `APi` (Controller, DTO) ใช้ Generic Repository, Unit of Work และ Specification Pattern
 - **ฐานข้อมูลที่ดูแลด้วย Migration** กว่า 30 Entity และกว่า 60 Migration ตลอดการพัฒนา
-- **มีเทสต์อัตโนมัติ** ครอบคลุมระบบสต็อกวัสดุ การออกใบเบิก PDF และตัวแปลงจำนวนเงินเป็นตัวอักษรไทย พร้อม CI ที่รันเมื่อ push หรือเปิด Pull Request ที่แก้โค้ด backend
+- **มีเทสต์อัตโนมัติ** ครอบคลุมระบบสต็อกวัสดุ การออกใบเบิก PDF และตัวแปลงจำนวนเงินเป็นตัวอักษรไทย พร้อม workflow GitHub Actions สำหรับรันเทสต์กับ SQL Server จริงใน container (ตอนนี้ตั้งเป็นรันด้วยมือก่อน)
 - **จัดการความลับอย่างปลอดภัย** บัญชีผู้ดูแลระบบเริ่มต้นไม่ถูกฝังในโค้ด อ่านจาก config / user-secrets
 - **รองรับภาษาไทย** ทั้งเอกสาร PDF (ฟอนต์ TH Sarabun New) และการแปลงตัวเลขเป็นข้อความภาษาไทย
 
