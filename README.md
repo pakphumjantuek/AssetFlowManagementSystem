@@ -2,7 +2,7 @@
 
 ระบบเว็บสำหรับบริหารพัสดุและครุภัณฑ์ของหน่วยงาน ครอบคลุมตั้งแต่ทะเบียนครุภัณฑ์ วัสดุและสต็อก การจัดซื้อจัดจ้าง ไปจนถึงการเบิก จำหน่าย ซ่อมบำรุง และออกเอกสาร PDF
 
-> **พัฒนาโดยคนเดียวทั้งระบบ** ตั้งแต่ออกแบบฐานข้อมูล เขียน Web API สร้างหน้าเว็บ เขียนเทสต์ ไปจนถึงตั้งค่า CI
+> **พัฒนาโดยคนเดียวทั้งระบบ** ตั้งแต่ออกแบบฐานข้อมูล เขียน Web API สร้างหน้าเว็บ เขียนเทสต์
 
 <!-- TODO: ใส่ภาพหน้าจอ 3–4 ภาพที่นี่ (ซ่อนข้อมูลจริงของหน่วยงานก่อน) เช่น
 ![หน้าหลัก](docs/screenshots/home.png)
@@ -26,8 +26,7 @@
 |---|---|
 | **Backend** | ASP.NET Core Web API (.NET 9), Entity Framework Core 9, SQL Server, ASP.NET Core Identity, AutoMapper, QuestPDF, Swagger |
 | **Frontend** | Angular 21, TypeScript 5.9, Angular Material, Tailwind CSS 4 |
-| **ทดสอบ** | xUnit |
-| **CI** | GitHub Actions (รันเทสต์กับ SQL Server จริงใน container) |
+
 
 ## จุดเด่นทางเทคนิค
 
